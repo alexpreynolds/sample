@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "reservoir-sample.h"
+
+const Boolean kTrue = 1;
+const Boolean kFalse = 0;
 
 struct offset_node {
     off_t start_offset;
@@ -14,21 +14,17 @@ struct reservoir {
 
 int main(int argc, char** argv) 
 {
-    int k = 0;
+    int k = -1;
     reservoir *reservoir_ptr = NULL;
     char *in_filename = NULL;
     int in_file_line_idx = 0;
 
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s k-samples input-fn\n", argv[0]);
-        return EXIT_FAILURE;
-    }
+    parse_command_line_options(argc, argv);
+    k = reservoir_sample_client_global_args.k;
+    in_filename = reservoir_sample_client_global_args.filenames[0];
 
-    k = atoi(argv[1]);
-    in_filename = argv[2];
-
-    if (k < 0) {
-        fprintf(stderr, "Usage: %s k-samples input-fn\n", argv[0]);
+    if ((k == 0) || (!in_filename)) {
+        print_usage(stderr);
         return EXIT_FAILURE;
     }
 
@@ -225,4 +221,84 @@ void free_reservoir_ptr(reservoir **res_ptr)
 
     free(*res_ptr);
     *res_ptr = NULL;
+}
+
+void initialize_globals()
+{
+    reservoir_sample_client_global_args.shuffle = kFalse;
+    reservoir_sample_client_global_args.k = 0;
+    reservoir_sample_client_global_args.filenames = NULL;
+    reservoir_sample_client_global_args.num_filenames = 0;
+}
+
+void parse_command_line_options(int argc, char **argv)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: parse_command_line_options()\n");
+#endif
+
+    int client_long_index;
+    int client_opt = getopt_long(argc, 
+                                 argv, 
+                                 reservoir_sample_client_opt_string, 
+                                 reservoir_sample_client_long_options, 
+                                 &client_long_index);
+
+    opterr = 0; /* disable error reporting by GNU getopt -- we handle this */
+    initialize_globals();
+    
+    while (client_opt != -1) 
+        {
+            switch (client_opt) 
+                {
+                case 'k':
+                    reservoir_sample_client_global_args.k = atoi(optarg);
+                    break;
+                case 's':
+                    reservoir_sample_client_global_args.shuffle = kTrue;
+                    break;
+                case 'h':
+                    print_usage(stdout);
+                    exit(EXIT_SUCCESS);
+                case '?':
+                    print_usage(stderr);
+                    exit(EXIT_FAILURE);
+                default:
+                    break;
+                }
+            client_opt = getopt_long(argc, 
+                                     argv, 
+                                     reservoir_sample_client_opt_string, 
+                                     reservoir_sample_client_long_options, 
+                                     &client_long_index);
+        }
+
+    reservoir_sample_client_global_args.filenames = argv + optind;
+    reservoir_sample_client_global_args.num_filenames = argc - optind;
+
+    /* check input */
+
+    if ((reservoir_sample_client_global_args.k < 0) ||
+        (reservoir_sample_client_global_args.num_filenames != 1))
+        {
+            print_usage(stderr);
+            exit(EXIT_FAILURE);
+        }
+}
+
+void print_usage(FILE *stream)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: print_usage()\n");
+#endif
+
+    fprintf(stream, 
+            "%s\n" \
+            "  version: %s\n" \
+            "  author:  %s\n" \
+            "%s\n", 
+            name, 
+            version,
+            authors,
+            usage);
 }
