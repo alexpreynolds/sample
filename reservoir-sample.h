@@ -23,9 +23,10 @@ static const char *authors = "Alex Reynolds";
 static const char *usage = "\n" \
     "Usage: reservoir-sample --sample-size=n [--shuffle] <newline-delimited-file>\n" \
     "\n" \
-    "  Performs reservoir sampling on very large input files that are delimited by\n" \
-    "  newline characters, minimizing memory usage by storing byte offsets to elements,\n" \
-    "  instead of the elements themselves.\n\n" \
+    "  Performs reservoir sampling (http://dx.doi.org/10.1145/3147.3165) on very large input\n" \
+    "  files that are delimited by newline characters. The approach used in this application\n" \
+    "  reduces memory usage by storing a pool of byte offsets to the start of each line, instead\n" \
+    "  of the line elements themselves.\n\n" \
     "  Process Flags:\n\n" \
     "  --sample-size=n | -k n      Number of samples to retrieve (n = positive integer)\n" \
     "  --shuffle                   Shuffle sample before printing to standard output (optional)\n" \
