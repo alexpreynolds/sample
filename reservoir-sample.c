@@ -1,16 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define DEFAULT_OFFSET_VALUE -1
-#define INT_TOKEN_CHR_MAX_LENGTH 127
-#define INT_TOKEN_ID_MAX_LENGTH 16383
-#define INT_TOKEN_REST_MAX_LENGTH 131072
-#define INT_MAX_DEC_INTEGERS 13
-#define LINE_LENGTH_VALUE (INT_TOKEN_CHR_MAX_LENGTH + INT_TOKEN_ID_MAX_LENGTH + INT_TOKEN_REST_MAX_LENGTH + 2*INT_MAX_DEC_INTEGERS)
-
-typedef struct offset_node offset_node;
-typedef struct reservoir reservoir;
+#include "reservoir-sample.h"
 
 struct offset_node {
     off_t start_offset;
@@ -20,15 +11,6 @@ struct reservoir {
     int length;
     offset_node **off_node_ptrs;
 };
-
-void print_reservoir_sample(const char *in_fn, reservoir *res_ptr);
-void sort_reservoir_ptr_offset_node_ptrs(reservoir **res_ptr);
-int node_ptr_offset_compare(const void *off1, const void *off2);
-void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *res_idx);
-reservoir * new_reservoir_ptr(int len);
-offset_node * new_offset_node_ptr(off_t val);
-void print_reservoir_ptr(reservoir *res_ptr);
-void free_reservoir_ptr(reservoir **res_ptr);
 
 int main(int argc, char** argv) 
 {
