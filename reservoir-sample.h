@@ -7,6 +7,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -32,7 +33,7 @@ struct offset_node {
 };
 
 struct reservoir {
-    int length;
+    long length;
     offset_node **off_node_ptrs;
 };
 
@@ -57,16 +58,16 @@ static const char *usage = "\n" \
     "  of the line elements themselves.\n\n" \
     "  Process Flags:\n\n" \
     "  --sample-size=n | -k n      Number of samples to retrieve (n = positive integer)\n" \
-    "  --shuffle                   Shuffle sample before printing to standard output (optional)\n" \
-    "  --mmap                      Use memory mapping for handling input file (default)\n" \
-    "  --cstdio                    Use C I/O routines for handling input file (optional)\n" \
-    "  --help                      Show this usage message\n";
+    "  --shuffle       | -s        Shuffle sample before printing to standard output (optional)\n" \
+    "  --mmap          | -m        Use memory mapping for handling input file (default)\n" \
+    "  --cstdio        | -c        Use C I/O routines for handling input file (optional)\n" \
+    "  --help          | -h        Show this usage message\n";
 
 static struct reservoir_sample_client_global_args_t {
     boolean shuffle;
     boolean mmap;
     boolean cstdio;
-    int k;
+    long k;
     char **filenames;
     int num_filenames;
 } reservoir_sample_client_global_args;
@@ -91,7 +92,7 @@ void sort_reservoir_ptr_offset_node_ptrs(reservoir **res_ptr);
 int node_ptr_offset_compare(const void *off1, const void *off2);
 void reservoir_sample_input_via_cstdio(const char *in_fn, reservoir **res_ptr);
 void reservoir_sample_input_via_mmap(file_mmap *in_mmap, reservoir **res_ptr);
-reservoir * new_reservoir_ptr(const int len);
+reservoir * new_reservoir_ptr(const long len);
 offset_node * new_offset_node_ptr(const off_t val);
 void print_reservoir_ptr(const reservoir *res_ptr);
 void free_reservoir_ptr(reservoir **res_ptr);

@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv) 
 {
-    int k = -1;
+    long k;
     reservoir *reservoir_ptr = NULL;
     char *in_filename = NULL;
     boolean mmap_in_file;
@@ -314,13 +314,13 @@ void reservoir_sample_input_via_cstdio(const char *in_fn, reservoir **res_ptr)
     fclose(in_file_ptr);
 }
 
-reservoir * new_reservoir_ptr(const int len)
+reservoir * new_reservoir_ptr(const long len)
 {
 #ifdef DEBUG
     fprintf(stderr, "Debug: new_reservoir_ptr()\n");
 #endif
 
-    int idx;
+    long idx;
     reservoir *res = NULL;
     offset_node **off_node_ptrs = NULL;
     
