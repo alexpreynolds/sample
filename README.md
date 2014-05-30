@@ -9,7 +9,7 @@ In its current form, this application offers a few advantages over common `shuf`
 * It uses much less memory than the usual reservoir sampling approach that stores a pool of sampled elements; instead, `reservoir-sample` stores the start positions of sampled lines (roughly 16 bytes per line).
 * Using less memory also gives `reservoir-sample` two advantages:
   - Helps avoid `shuf: memory exhausted` errors for whole-genome-scale input files.
-  - Allows a larger pool of samples, before running out of system memory.
+  - Allows a larger pool of samples, before running out of system memory. For instance, a 2 GB allocation would allow a sample size up to ~134M random elements.
   
 To give an idea of the speed improvement, we compare the time performance of `shuf` and `reservoir-sample` for sampling three elements from a ~12M element, five-column BED file:
 
