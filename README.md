@@ -46,7 +46,7 @@ The `reservoir-sample` tool stores a pool of line positions and makes two passes
 
 The benefit that `mmap` provided was significant. For comparison purposes, we also add a `--cstdio` option to test the performance of the use of standard C I/O routines (`fseek()`, etc.); predictably, this performed worse than the `mmap`-based approach in all tests, but timing results were about identical with `gshuf` on OS X and still an average 1.5x improvement over `shuf` under Linux.
 
-While we use a BED file here as an example input file, reservoir-sample can be used to sample from any text file delimited by newline characters (BED, SAM, VCF, etc.).
+While we use a BED file here as an example input file, `reservoir-sample` can be used to sample from any text file delimited by newline characters (BED, SAM, VCF, etc.).
 
 By leaving out the `--shuffle` option, the output sample preserves the input order. For example, when sampling from an input BED file that has been sorted by `sort-bed`, which applies a lexicographical sort on chromosome names and a numerical sort on start and stop coordinates, the sample will also have the same ordering applied, with a relatively small *O(klogk)* penalty for a sample of size *k*:
 
