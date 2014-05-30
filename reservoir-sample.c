@@ -5,11 +5,13 @@ int main(int argc, char** argv)
     int k = -1;
     reservoir *reservoir_ptr = NULL;
     char *in_filename = NULL;
-    int in_file_line_idx = 0;
+    boolean mmap_in_file;
+    file_mmap *in_file_mmap_ptr = NULL;
 
     parse_command_line_options(argc, argv);
     k = reservoir_sample_client_global_args.k;
     in_filename = reservoir_sample_client_global_args.filenames[0];
+    mmap_in_file = reservoir_sample_client_global_args.mmap;
 
     if ((k <= 0) || (!in_filename)) {
         print_usage(stderr);
@@ -20,7 +22,12 @@ int main(int argc, char** argv)
     srand(time(NULL));
 
     reservoir_ptr = new_reservoir_ptr(k);
-    reservoir_sample_input(in_filename, &reservoir_ptr, &in_file_line_idx);
+    if (!mmap_in_file)
+        reservoir_sample_input_via_cstdio(in_filename, &reservoir_ptr);
+    else {
+        in_file_mmap_ptr = new_file_mmap(in_filename);
+        reservoir_sample_input_via_mmap(in_file_mmap_ptr, &reservoir_ptr);
+    }
 #ifdef DEBUG
     print_reservoir_ptr(reservoir_ptr);
 #endif
@@ -28,16 +35,126 @@ int main(int argc, char** argv)
 #ifdef DEBUG
     print_reservoir_ptr(reservoir_ptr);
 #endif
-    print_sorted_reservoir_sample(in_filename, reservoir_ptr);
+    if (!mmap_in_file)
+        print_sorted_reservoir_sample_via_cstdio(in_filename, reservoir_ptr);
+    else {
+        print_sorted_reservoir_sample_via_mmap(in_file_mmap_ptr, reservoir_ptr);
+        free_file_mmap(&in_file_mmap_ptr);
+    }
     free_reservoir_ptr(&reservoir_ptr);
 
     return EXIT_SUCCESS;
 }
 
-void print_sorted_reservoir_sample(const char *in_fn, reservoir *res_ptr)
+file_mmap * new_file_mmap(const char *in_fn)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: print_sorted_reservoir_sample()\n");
+    fprintf(stderr, "Debug: new_file_mmap()\n");
+#endif
+    
+    file_mmap *mmap_ptr = NULL;
+    boolean not_stdin = kTrue;
+
+    mmap_ptr = malloc(sizeof(file_mmap *));
+    if (!mmap_ptr) {
+        fprintf(stderr, "Error: Mmap pointer is NULL\n");
+        exit(EXIT_FAILURE);
+    }
+
+    not_stdin = (strcmp(in_fn, "-")) ? kTrue : kFalse;
+    
+    if (!not_stdin) {
+        fprintf(stderr, "Error: Stdin not yet supported with mmap setup function\n");
+        exit(EXIT_FAILURE);
+    }
+
+    mmap_ptr->fd = open(in_fn, O_RDONLY);
+    mmap_ptr->status = fstat(mmap_ptr->fd, &(mmap_ptr->s));
+    mmap_ptr->size = mmap_ptr->s.st_size;
+
+    mmap_ptr->map = (char *) mmap((caddr_t) 0, 
+                                  mmap_ptr->size, 
+                                  PROT_READ, 
+                                  MAP_SHARED,
+                                  mmap_ptr->fd, 
+                                  0);
+
+    return mmap_ptr;
+}
+
+void free_file_mmap(file_mmap **mmap_ptr)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: free_file_mmap()\n");
+#endif
+
+    if (*mmap_ptr) {
+        close((*mmap_ptr)->fd);
+        munmap((caddr_t) 0, (*mmap_ptr)->size);
+        free(*mmap_ptr);
+        *mmap_ptr = NULL;
+    }
+}
+
+void reservoir_sample_input_via_mmap(file_mmap *in_mmap, reservoir **res_ptr) 
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: reservoir_sample_input_via_mmap()\n");
+#endif
+
+    size_t offset_idx;
+    off_t start_offset = 0;
+    off_t stop_offset = 0;
+    int k = (*res_ptr)->length;
+    int ln_idx = 0;
+    double p_replacement = 0.0;
+    int rand_node_idx = 0;
+
+    for (offset_idx = 0; offset_idx < in_mmap->size; ++offset_idx) {
+        if (in_mmap->map[offset_idx] == '\n') {
+            if (ln_idx < k)
+                (*res_ptr)->off_node_ptrs[ln_idx] = new_offset_node_ptr(start_offset);
+            else {
+                p_replacement = (double) k / (ln_idx + 1);
+                rand_node_idx = rand() % k;
+                if (p_replacement > ((double) rand() / RAND_MAX))
+                    (*res_ptr)->off_node_ptrs[rand_node_idx]->start_offset = start_offset;
+            }
+            stop_offset = offset_idx;
+            start_offset = stop_offset + 1;
+            ln_idx++;
+        }
+    }
+
+    if (ln_idx < k)
+        (*res_ptr)->length = ln_idx;
+}
+
+void print_sorted_reservoir_sample_via_mmap(const file_mmap *in_mmap, reservoir *res_ptr)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: print_sorted_reservoir_sample_via_mmap()\n");
+#endif
+
+    int res_idx, mmap_idx;
+    off_t current_offset;
+    char current_char;
+    
+    for (res_idx = 0; res_idx < res_ptr->length; ++res_idx) {
+        current_offset = res_ptr->off_node_ptrs[res_idx]->start_offset;
+        for (mmap_idx = current_offset; mmap_idx < current_offset + LINE_LENGTH_VALUE; ++current_offset) {
+            current_char = in_mmap->map[mmap_idx];
+            fprintf(stdout, "%c", current_char);
+            if (in_mmap->map[mmap_idx] == '\n')
+                break;
+        }
+    }
+}
+
+void print_sorted_reservoir_sample_via_cstdio(const char *in_fn, reservoir *res_ptr)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: print_sorted_reservoir_sample_via_cstdio()\n");
 #endif
 
     int not_stdin = 0;
@@ -89,7 +206,7 @@ int node_ptr_offset_compare(const void *node1, const void *node2)
     return (off_diff > 0) ? 1 : -1;
 } 
 
-void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *ln_idx)
+void reservoir_sample_input_via_cstdio(const char *in_fn, reservoir **res_ptr)
 {
 #ifdef DEBUG
     fprintf(stderr, "Debug: reservoir_sample_input_offsets()\n");
@@ -103,6 +220,7 @@ void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *ln_idx)
     int k = (*res_ptr)->length;
     double p_replacement = 0.0;
     int rand_node_idx = 0;
+    int ln_idx = 0;
 
     not_stdin = strcmp(in_fn, "-");
     in_file_ptr = (not_stdin) ? fopen(in_fn, "r") : stdin;
@@ -111,22 +229,22 @@ void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *ln_idx)
         fprintf(stderr, "Error: Stdin not yet supported with this function\n");
         exit(EXIT_FAILURE);
     }
-
+    
     in_line[LINE_LENGTH_VALUE] = '1';
     while (fgets(in_line, LINE_LENGTH_VALUE + 1, in_file_ptr)) 
         {
-            if (*ln_idx < k) {
+            if (ln_idx < k) {
 #ifdef DEBUG
-                fprintf(stderr, "Debug: Adding node at idx %012d with offset %012lld\n", *ln_idx, (long long int) start_offset);
+                fprintf(stderr, "Debug: Adding node at idx %012d with offset %012lld\n", ln_idx, (long long int) start_offset);
 #endif
-                (*res_ptr)->off_node_ptrs[*ln_idx] = new_offset_node_ptr(start_offset);
+                (*res_ptr)->off_node_ptrs[ln_idx] = new_offset_node_ptr(start_offset);
             }
             else {
-                p_replacement = (double)k/((*ln_idx) + 1);
+                p_replacement = (double) k / (ln_idx + 1);
                 rand_node_idx = rand() % k;
-                if (p_replacement > ((double)rand()/RAND_MAX)) {
+                if (p_replacement > ((double) rand() / RAND_MAX)) {
 #ifdef DEBUG
-                    fprintf(stderr, "Debug: Replacing random node %012d for line %012d with probability %f\n", rand_node_idx, *ln_idx, p_replacement);
+                    fprintf(stderr, "Debug: Replacing random node %012d for line %012d with probability %f\n", rand_node_idx, ln_idx, p_replacement);
 #endif
                     (*res_ptr)->off_node_ptrs[rand_node_idx]->start_offset = start_offset;
                 }
@@ -136,17 +254,17 @@ void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *ln_idx)
             fprintf(stderr, "Debug: [%012lld - %012lld]\n", (long long int) start_offset, (long long int) stop_offset);
 #endif
             start_offset = stop_offset;
-            (*ln_idx)++;
+            ln_idx++;
         }
 
     /* for when there are fewer lines than the sample size */
-    if (*ln_idx < k)
-        (*res_ptr)->length = *ln_idx;
+    if (ln_idx < k)
+        (*res_ptr)->length = ln_idx;
 
     fclose(in_file_ptr);
 }
 
-reservoir * new_reservoir_ptr(int len)
+reservoir * new_reservoir_ptr(const int len)
 {
 #ifdef DEBUG
     fprintf(stderr, "Debug: new_reservoir_ptr()\n");
@@ -168,7 +286,7 @@ reservoir * new_reservoir_ptr(int len)
     return res;
 }
 
-offset_node * new_offset_node_ptr(off_t val) 
+offset_node * new_offset_node_ptr(const off_t val) 
 {
     offset_node *node_ptr = NULL;
 
@@ -182,7 +300,7 @@ offset_node * new_offset_node_ptr(off_t val)
     return node_ptr;
 }
 
-void print_reservoir_ptr(reservoir *res_ptr)
+void print_reservoir_ptr(const reservoir *res_ptr)
 {
 #ifdef DEBUG
     fprintf(stderr, "Debug: print_reservoir_ptr()\n");
@@ -226,6 +344,7 @@ void free_reservoir_ptr(reservoir **res_ptr)
 void initialize_globals()
 {
     reservoir_sample_client_global_args.shuffle = kFalse;
+    reservoir_sample_client_global_args.mmap = kFalse;
     reservoir_sample_client_global_args.k = 0;
     reservoir_sample_client_global_args.filenames = NULL;
     reservoir_sample_client_global_args.num_filenames = 0;
@@ -256,6 +375,9 @@ void parse_command_line_options(int argc, char **argv)
                     break;
                 case 's':
                     reservoir_sample_client_global_args.shuffle = kTrue;
+                    break;
+                case 'm':
+                    reservoir_sample_client_global_args.mmap = kTrue;
                     break;
                 case 'h':
                     print_usage(stdout);
