@@ -16,8 +16,20 @@ typedef int Boolean;
 extern const Boolean kTrue;
 extern const Boolean kFalse;
 
+const Boolean kTrue = 1;
+const Boolean kFalse = 0;
+
 typedef struct offset_node offset_node;
 typedef struct reservoir reservoir;
+
+struct offset_node {
+    off_t start_offset;
+};
+
+struct reservoir {
+    int length;
+    offset_node **off_node_ptrs;
+};
 
 static const char *name = "reservoir-sample";
 static const char *version = RS_VERSION;

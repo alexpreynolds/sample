@@ -1,17 +1,5 @@
 #include "reservoir-sample.h"
 
-const Boolean kTrue = 1;
-const Boolean kFalse = 0;
-
-struct offset_node {
-    off_t start_offset;
-};
-
-struct reservoir {
-    int length;
-    offset_node **off_node_ptrs;
-};
-
 int main(int argc, char** argv) 
 {
     int k = -1;
@@ -23,7 +11,7 @@ int main(int argc, char** argv)
     k = reservoir_sample_client_global_args.k;
     in_filename = reservoir_sample_client_global_args.filenames[0];
 
-    if ((k == 0) || (!in_filename)) {
+    if ((k <= 0) || (!in_filename)) {
         print_usage(stderr);
         return EXIT_FAILURE;
     }
