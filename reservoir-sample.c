@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 void print_sorted_reservoir_sample(const char *in_fn, reservoir *res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: print_reservoir_sample()\n");
+    fprintf(stderr, "Debug: print_sorted_reservoir_sample()\n");
 #endif
 
     int not_stdin = 0;
@@ -65,7 +65,11 @@ void print_sorted_reservoir_sample(const char *in_fn, reservoir *res_ptr)
     }
 
     for (idx = 0; idx < res_ptr->length; ++idx) {
-        /* we use SEEK_CUR to jump from wherever the file pointer is now, instead of from the start of the file */
+        /* 
+           we use SEEK_CUR to jump from wherever the file pointer is now, instead of 
+           from the start of the file -- we can do this because the offsets are in
+           sorted order
+        */
         fseek(in_file_ptr, res_ptr->off_node_ptrs[idx]->start_offset - previous_offset - previous_line_length, SEEK_CUR);
         fgets(in_line, LINE_LENGTH_VALUE + 1, in_file_ptr);
         fprintf(stdout, "%s", in_line);
