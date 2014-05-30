@@ -74,17 +74,20 @@ file_mmap * new_file_mmap(const char *in_fn)
         fprintf(stderr, "Error: Mmap pointer's filename pointer is NULL\n");
         exit(EXIT_FAILURE);
     }
-    strcpy(mmap_ptr->fn, in_fn);
+    strncpy(mmap_ptr->fn, in_fn, strlen(in_fn) + 1);
     mmap_ptr->fd = open(mmap_ptr->fn, O_RDONLY);
     mmap_ptr->status = fstat(mmap_ptr->fd, &(mmap_ptr->s));
     mmap_ptr->size = mmap_ptr->s.st_size;
-
-    mmap_ptr->map = (char *) mmap(0, 
+    mmap_ptr->map = (char *) mmap(NULL, 
                                   mmap_ptr->size, 
                                   PROT_READ, 
                                   MAP_SHARED,
                                   mmap_ptr->fd, 
                                   0);
+    if (mmap_ptr->map == MAP_FAILED) {
+        fprintf(stderr, "Error: Mmap pointer map failed\n");
+        exit(EXIT_FAILURE);
+    }
 
     return mmap_ptr;
 }
@@ -95,6 +98,7 @@ void free_file_mmap(file_mmap **mmap_ptr)
     fprintf(stderr, "Debug: free_file_mmap()\n");
 #endif
 
+    free((*mmap_ptr)->fn);
     close((*mmap_ptr)->fd);
     munmap((*mmap_ptr)->map, (*mmap_ptr)->size);
 }
@@ -115,8 +119,9 @@ void reservoir_sample_input_via_mmap(file_mmap *in_mmap, reservoir **res_ptr)
 
     for (offset_idx = 0; offset_idx < in_mmap->size; ++offset_idx) {
         if (in_mmap->map[offset_idx] == '\n') {
-            if (ln_idx < k)
+            if (ln_idx < k) {
                 (*res_ptr)->off_node_ptrs[ln_idx] = new_offset_node_ptr(start_offset);
+            }
             else {
                 p_replacement = (double) k / (ln_idx + 1);
                 rand_node_idx = rand() % k;
