@@ -68,7 +68,14 @@ file_mmap * new_file_mmap(const char *in_fn)
         exit(EXIT_FAILURE);
     }
 
-    mmap_ptr->fd = open(in_fn, O_RDONLY);
+    mmap_ptr->fn = NULL;
+    mmap_ptr->fn = malloc(strlen(in_fn) + 1);
+    if (!mmap_ptr->fn) {
+        fprintf(stderr, "Error: Mmap pointer's filename pointer is NULL\n");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(mmap_ptr->fn, in_fn);
+    mmap_ptr->fd = open(mmap_ptr->fn, O_RDONLY);
     mmap_ptr->status = fstat(mmap_ptr->fd, &(mmap_ptr->s));
     mmap_ptr->size = mmap_ptr->s.st_size;
 
@@ -88,12 +95,8 @@ void free_file_mmap(file_mmap **mmap_ptr)
     fprintf(stderr, "Debug: free_file_mmap()\n");
 #endif
 
-    if (*mmap_ptr) {
-        close((*mmap_ptr)->fd);
-        munmap((caddr_t) 0, (*mmap_ptr)->size);
-        free(*mmap_ptr);
-        *mmap_ptr = NULL;
-    }
+    close((*mmap_ptr)->fd);
+    munmap((*mmap_ptr)->map, (*mmap_ptr)->size);
 }
 
 void reservoir_sample_input_via_mmap(file_mmap *in_mmap, reservoir **res_ptr) 
@@ -138,13 +141,11 @@ void print_sorted_reservoir_sample_via_mmap(const file_mmap *in_mmap, reservoir 
 
     int res_idx, mmap_idx;
     off_t current_offset;
-    char current_char;
     
     for (res_idx = 0; res_idx < res_ptr->length; ++res_idx) {
         current_offset = res_ptr->off_node_ptrs[res_idx]->start_offset;
-        for (mmap_idx = current_offset; mmap_idx < current_offset + LINE_LENGTH_VALUE; ++current_offset) {
-            current_char = in_mmap->map[mmap_idx];
-            fprintf(stdout, "%c", current_char);
+        for (mmap_idx = current_offset; mmap_idx < current_offset + LINE_LENGTH_VALUE; ++mmap_idx) {
+            fprintf(stdout, "%c", in_mmap->map[mmap_idx]);
             if (in_mmap->map[mmap_idx] == '\n')
                 break;
         }

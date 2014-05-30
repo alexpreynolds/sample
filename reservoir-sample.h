@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -37,6 +38,7 @@ struct reservoir {
 
 struct file_mmap {
     int fd;
+    char *fn;
     struct stat s;
     int status;
     size_t size;
