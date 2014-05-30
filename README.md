@@ -5,7 +5,7 @@ This tool performs reservoir sampling (Vitter, "Random sampling with a reservoir
 
 In its current form, this application offers a few advantages over common `shuf`-based approaches:
 
-* It performs roughly 2.25-2.75x faster than shuf in informal tests on OS X and Linux hosts.
+* It performs roughly 2.25-2.75x faster than `shuf` in informal tests on OS X and Linux hosts.
 * It uses much less memory than the usual reservoir sampling approach that stores a pool of sampled elements; instead, `reservoir-sample` stores the start positions of sampled lines (roughly 16 bytes per line).
 * Using less memory also gives `reservoir-sample` two advantages:
   - Helps avoid `shuf: memory exhausted` errors for whole-genome-scale input files.
