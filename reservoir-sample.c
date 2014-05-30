@@ -98,7 +98,6 @@ void free_file_mmap(file_mmap **mmap_ptr)
     fprintf(stderr, "Debug: free_file_mmap()\n");
 #endif
 
-    free((*mmap_ptr)->fn);
     close((*mmap_ptr)->fd);
     munmap((*mmap_ptr)->map, (*mmap_ptr)->size);
 }
