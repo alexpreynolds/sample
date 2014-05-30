@@ -7,11 +7,13 @@ int main(int argc, char** argv)
     char *in_filename = NULL;
     boolean mmap_in_file;
     file_mmap *in_file_mmap_ptr = NULL;
+    boolean shuffle_output;
 
     parse_command_line_options(argc, argv);
     k = reservoir_sample_client_global_args.k;
     in_filename = reservoir_sample_client_global_args.filenames[0];
     mmap_in_file = reservoir_sample_client_global_args.mmap;
+    shuffle_output = reservoir_sample_client_global_args.shuffle;
 
     if ((k <= 0) || (!in_filename)) {
         print_usage(stderr);
@@ -31,14 +33,19 @@ int main(int argc, char** argv)
 #ifdef DEBUG
     print_reservoir_ptr(reservoir_ptr);
 #endif
-    sort_reservoir_ptr_offset_node_ptrs(&reservoir_ptr);
+    if (!shuffle_output)
+        sort_reservoir_ptr_offset_node_ptrs(&reservoir_ptr);
 #ifdef DEBUG
     print_reservoir_ptr(reservoir_ptr);
 #endif
-    if (!mmap_in_file)
-        print_sorted_reservoir_sample_via_cstdio(in_filename, reservoir_ptr);
+    if (!mmap_in_file) {
+        if (!shuffle_output)
+            print_sorted_reservoir_sample_via_cstdio(in_filename, reservoir_ptr);
+        else
+            print_unsorted_reservoir_sample_via_cstdio(in_filename, reservoir_ptr);
+    }
     else {
-        print_sorted_reservoir_sample_via_mmap(in_file_mmap_ptr, reservoir_ptr);
+        print_reservoir_sample_via_mmap(in_file_mmap_ptr, reservoir_ptr);
         free_file_mmap(&in_file_mmap_ptr);
     }
     free_reservoir_ptr(&reservoir_ptr);
@@ -144,10 +151,10 @@ void reservoir_sample_input_via_mmap(file_mmap *in_mmap, reservoir **res_ptr)
         (*res_ptr)->length = ln_idx;
 }
 
-void print_sorted_reservoir_sample_via_mmap(const file_mmap *in_mmap, reservoir *res_ptr)
+void print_reservoir_sample_via_mmap(const file_mmap *in_mmap, reservoir *res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: print_sorted_reservoir_sample_via_mmap()\n");
+    fprintf(stderr, "Debug: print_reservoir_sample_via_mmap()\n");
 #endif
 
     int res_idx, mmap_idx;
@@ -195,6 +202,37 @@ void print_sorted_reservoir_sample_via_cstdio(const char *in_fn, reservoir *res_
         fprintf(stdout, "%s", in_line);
         previous_line_length = strlen(in_line);
         previous_offset = res_ptr->off_node_ptrs[idx]->start_offset;
+    }
+
+    fclose(in_file_ptr);
+}
+
+void print_unsorted_reservoir_sample_via_cstdio(const char *in_fn, reservoir *res_ptr)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: print_unsorted_reservoir_sample_via_cstdio()\n");
+#endif
+
+    int not_stdin = 0;
+    FILE *in_file_ptr = NULL;
+    int idx;
+    char in_line[LINE_LENGTH_VALUE + 1];
+
+    not_stdin = strcmp(in_fn, "-");
+    in_file_ptr = (not_stdin) ? fopen(in_fn, "r") : stdin;
+    
+    if (in_file_ptr == stdin) {
+        fprintf(stderr, "Error: Stdin not yet supported with this function\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (idx = 0; idx < res_ptr->length; ++idx) {
+        /* 
+           we use SEEK_SET to jump from the start of the file, as the offsets are unsorted
+        */
+        fseek(in_file_ptr, res_ptr->off_node_ptrs[idx]->start_offset, SEEK_SET);
+        fgets(in_line, LINE_LENGTH_VALUE + 1, in_file_ptr);
+        fprintf(stdout, "%s", in_line);
     }
 
     fclose(in_file_ptr);
@@ -356,7 +394,8 @@ void free_reservoir_ptr(reservoir **res_ptr)
 void initialize_globals()
 {
     reservoir_sample_client_global_args.shuffle = kFalse;
-    reservoir_sample_client_global_args.mmap = kFalse;
+    reservoir_sample_client_global_args.mmap = kTrue;
+    reservoir_sample_client_global_args.cstdio = kFalse;
     reservoir_sample_client_global_args.k = 0;
     reservoir_sample_client_global_args.filenames = NULL;
     reservoir_sample_client_global_args.num_filenames = 0;
@@ -390,6 +429,11 @@ void parse_command_line_options(int argc, char **argv)
                     break;
                 case 'm':
                     reservoir_sample_client_global_args.mmap = kTrue;
+                    reservoir_sample_client_global_args.cstdio = kFalse;
+                    break;
+                case 'c':
+                    reservoir_sample_client_global_args.mmap = kFalse;
+                    reservoir_sample_client_global_args.cstdio = kTrue;
                     break;
                 case 'h':
                     print_usage(stdout);
