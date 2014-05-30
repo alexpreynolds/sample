@@ -37,13 +37,13 @@ int main(int argc, char** argv)
 #ifdef DEBUG
     print_reservoir_ptr(reservoir_ptr);
 #endif
-    print_reservoir_sample(in_filename, reservoir_ptr);
+    print_sorted_reservoir_sample(in_filename, reservoir_ptr);
     free_reservoir_ptr(&reservoir_ptr);
 
     return EXIT_SUCCESS;
 }
 
-void print_reservoir_sample(const char *in_fn, reservoir *res_ptr)
+void print_sorted_reservoir_sample(const char *in_fn, reservoir *res_ptr)
 {
 #ifdef DEBUG
     fprintf(stderr, "Debug: print_reservoir_sample()\n");
@@ -53,6 +53,8 @@ void print_reservoir_sample(const char *in_fn, reservoir *res_ptr)
     FILE *in_file_ptr = NULL;
     int idx;
     char in_line[LINE_LENGTH_VALUE + 1];
+    off_t previous_offset = 0;
+    size_t previous_line_length = 0;
 
     not_stdin = strcmp(in_fn, "-");
     in_file_ptr = (not_stdin) ? fopen(in_fn, "r") : stdin;
@@ -63,9 +65,12 @@ void print_reservoir_sample(const char *in_fn, reservoir *res_ptr)
     }
 
     for (idx = 0; idx < res_ptr->length; ++idx) {
-        fseek(in_file_ptr, res_ptr->off_node_ptrs[idx]->start_offset, SEEK_SET);
+        /* we use SEEK_CUR to jump from wherever the file pointer is now, instead of from the start of the file */
+        fseek(in_file_ptr, res_ptr->off_node_ptrs[idx]->start_offset - previous_offset - previous_line_length, SEEK_CUR);
         fgets(in_line, LINE_LENGTH_VALUE + 1, in_file_ptr);
         fprintf(stdout, "%s", in_line);
+        previous_line_length = strlen(in_line);
+        previous_offset = res_ptr->off_node_ptrs[idx]->start_offset;
     }
 
     fclose(in_file_ptr);

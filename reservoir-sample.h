@@ -48,7 +48,7 @@ static struct option reservoir_sample_client_long_options[] = {
 
 static const char *reservoir_sample_client_opt_string = "k:sh?";
 
-void print_reservoir_sample(const char *in_fn, reservoir *res_ptr);
+void print_sorted_reservoir_sample(const char *in_fn, reservoir *res_ptr);
 void sort_reservoir_ptr_offset_node_ptrs(reservoir **res_ptr);
 int node_ptr_offset_compare(const void *off1, const void *off2);
 void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *res_idx);
