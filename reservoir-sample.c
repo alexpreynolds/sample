@@ -28,6 +28,9 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    /* seed random number generator */
+    srand(time(NULL));
+
     reservoir_ptr = new_reservoir_ptr(k);
     reservoir_sample_input(in_filename, &reservoir_ptr, &in_file_line_idx);
 #ifdef DEBUG
@@ -132,8 +135,8 @@ void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *ln_idx)
             }
             else {
                 p_replacement = (double)k/((*ln_idx) + 1);
-                rand_node_idx = arc4random() % k;
-                if (p_replacement > ((double)arc4random()/RAND_MAX)) {
+                rand_node_idx = rand() % k;
+                if (p_replacement > ((double)rand()/RAND_MAX)) {
 #ifdef DEBUG
                     fprintf(stderr, "Debug: Replacing random node %012d for line %012d with probability %f\n", rand_node_idx, *ln_idx, p_replacement);
 #endif
@@ -200,7 +203,7 @@ void print_reservoir_ptr(reservoir *res_ptr)
     int idx;
 
     for (idx = 0; idx < res_ptr->length; ++idx)
-        fprintf(stdout, "[%012d] %012lld\n", idx, res_ptr->off_node_ptrs[idx]->start_offset);
+        fprintf(stdout, "[%012d] %012lld\n", idx, (long long int) res_ptr->off_node_ptrs[idx]->start_offset);
 }
 
 void free_reservoir_ptr(reservoir **res_ptr)
