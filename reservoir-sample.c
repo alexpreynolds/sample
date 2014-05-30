@@ -83,7 +83,7 @@ int node_ptr_offset_compare(const void *node1, const void *node2)
 {
 #ifdef DEBUG
     fprintf(stderr, "Debug: node_ptr_offset_compare()\n");
-    fprintf(stderr, "Debug: Comparing: %012lld and %012lld\n", (*(offset_node **)node1)->start_offset, (*(offset_node **)node2)->start_offset);
+    fprintf(stderr, "Debug: Comparing: %012lld and %012lld\n", (long long int) (*(offset_node **)node1)->start_offset, (long long int) (*(offset_node **)node2)->start_offset);
 #endif
     int off_diff = (*(offset_node **)node1)->start_offset - (*(offset_node **)node2)->start_offset;
     return (off_diff > 0) ? 1 : -1;
@@ -117,7 +117,7 @@ void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *ln_idx)
         {
             if (*ln_idx < k) {
 #ifdef DEBUG
-                fprintf(stderr, "Debug: Adding node at idx %012d with offset %012lld\n", *ln_idx, start_offset);
+                fprintf(stderr, "Debug: Adding node at idx %012d with offset %012lld\n", *ln_idx, (long long int) start_offset);
 #endif
                 (*res_ptr)->off_node_ptrs[*ln_idx] = new_offset_node_ptr(start_offset);
             }
@@ -133,7 +133,7 @@ void reservoir_sample_input(const char *in_fn, reservoir **res_ptr, int *ln_idx)
             }
             stop_offset = ftell(in_file_ptr);
 #ifdef DEBUG
-            fprintf(stderr, "Debug: [%012lld - %012lld]\n", start_offset, stop_offset);
+            fprintf(stderr, "Debug: [%012lld - %012lld]\n", (long long int) start_offset, (long long int) stop_offset);
 #endif
             start_offset = stop_offset;
             (*ln_idx)++;
