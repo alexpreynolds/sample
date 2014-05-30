@@ -72,7 +72,7 @@ file_mmap * new_file_mmap(const char *in_fn)
     mmap_ptr->status = fstat(mmap_ptr->fd, &(mmap_ptr->s));
     mmap_ptr->size = mmap_ptr->s.st_size;
 
-    mmap_ptr->map = (char *) mmap((caddr_t) 0, 
+    mmap_ptr->map = (char *) mmap(0, 
                                   mmap_ptr->size, 
                                   PROT_READ, 
                                   MAP_SHARED,
