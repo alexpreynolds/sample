@@ -55,7 +55,7 @@ file_mmap * new_file_mmap(const char *in_fn)
     file_mmap *mmap_ptr = NULL;
     boolean not_stdin = kTrue;
 
-    mmap_ptr = malloc(sizeof(file_mmap *));
+    mmap_ptr = malloc(sizeof(file_mmap));
     if (!mmap_ptr) {
         fprintf(stderr, "Error: Mmap pointer is NULL\n");
         exit(EXIT_FAILURE);
@@ -100,6 +100,10 @@ void free_file_mmap(file_mmap **mmap_ptr)
 
     close((*mmap_ptr)->fd);
     munmap((*mmap_ptr)->map, (*mmap_ptr)->size);
+    free((*mmap_ptr)->fn);
+    (*mmap_ptr)->fn = NULL;
+    free(*mmap_ptr);
+    *mmap_ptr = NULL;
 }
 
 void reservoir_sample_input_via_mmap(file_mmap *in_mmap, reservoir **res_ptr) 
@@ -119,6 +123,9 @@ void reservoir_sample_input_via_mmap(file_mmap *in_mmap, reservoir **res_ptr)
     for (offset_idx = 0; offset_idx < in_mmap->size; ++offset_idx) {
         if (in_mmap->map[offset_idx] == '\n') {
             if (ln_idx < k) {
+#ifdef DEBUG
+                fprintf(stderr, "Debug: Adding node at idx %012d with offset %012lld\n", ln_idx, (long long int) start_offset);
+#endif
                 (*res_ptr)->off_node_ptrs[ln_idx] = new_offset_node_ptr(start_offset);
             }
             else {
