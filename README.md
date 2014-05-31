@@ -18,7 +18,7 @@ $ wc -l ~/fBrain.chr1.bed
  12462524 ~/fBrain.chr1.bed
 ```
  
-Here is how `shuf` (`gshuf` v8.22 via Homebrew) does:
+Here is an example of how `shuf` (`gshuf` v8.22 via Homebrew) does with this file:
 
 ```
 $ /usr/bin/time -p sh -c 'gshuf ~/fBrain.chr1.bed | head -3'
@@ -30,7 +30,7 @@ user         2.08
 sys          0.36
 ```
 
-Here is how `reservoir-sample` does with the same parameters, after refreshing cache:
+Here is an example of how `reservoir-sample` does with the same file and parameters, after refreshing cache:
 
 ```
 $ /usr/bin/time -p sh -c '../bin/reservoir-sample --shuffle --sample-size=3 ~/fBrain.chr1.bed'
