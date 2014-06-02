@@ -50,7 +50,7 @@ static const char *name = "reservoir-sample";
 static const char *version = RS_VERSION;
 static const char *authors = "Alex Reynolds";
 static const char *usage = "\n" \
-    "Usage: reservoir-sample --sample-size=n [--shuffle] [--mmap | --cstdio] <newline-delimited-file>\n" \
+    "Usage: reservoir-sample --sample-size=n [--shuffle] [--hybrid | --mmap | --cstdio] <newline-delimited-file>\n" \
     "\n" \
     "  Performs reservoir sampling (http://dx.doi.org/10.1145/3147.3165) on very large input\n" \
     "  files that are delimited by newline characters. The approach used in this application\n" \
@@ -59,12 +59,14 @@ static const char *usage = "\n" \
     "  Process Flags:\n\n" \
     "  --sample-size=n | -k n      Number of samples to retrieve (n = positive integer)\n" \
     "  --shuffle       | -s        Shuffle sample before printing to standard output (optional)\n" \
-    "  --mmap          | -m        Use memory mapping for handling input file (default)\n" \
+    "  --hybrid        | -y        Use hybrid of C I/O routines and memory mapping for handling input file (default)\n" \
+    "  --mmap          | -m        Use memory mapping for handling input file (optional)\n" \
     "  --cstdio        | -c        Use C I/O routines for handling input file (optional)\n" \
     "  --help          | -h        Show this usage message\n";
 
 static struct reservoir_sample_client_global_args_t {
     boolean shuffle;
+    boolean hybrid;
     boolean mmap;
     boolean cstdio;
     long k;
@@ -75,13 +77,14 @@ static struct reservoir_sample_client_global_args_t {
 static struct option reservoir_sample_client_long_options[] = {
     { "sample-size",	required_argument,	NULL,	'k' },
     { "shuffle",	no_argument,		NULL,	's' },
+    { "hybrid",	        no_argument,		NULL,	'y' },
     { "mmap",	        no_argument,		NULL,	'm' },
     { "cstdio",	        no_argument,		NULL,	'c' },
     { "help",		no_argument,		NULL,	'h' },
     { NULL,		no_argument,		NULL,	 0  }
 }; 
 
-static const char *reservoir_sample_client_opt_string = "k:smch?";
+static const char *reservoir_sample_client_opt_string = "k:symch?";
 
 file_mmap * new_file_mmap(const char *in_fn);
 void free_file_mmap(file_mmap **mmap_ptr);

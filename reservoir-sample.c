@@ -5,14 +5,18 @@ int main(int argc, char** argv)
     long k;
     reservoir *reservoir_ptr = NULL;
     char *in_filename = NULL;
-    boolean mmap_in_file;
     file_mmap *in_file_mmap_ptr = NULL;
     boolean shuffle_output;
+    boolean mmap_in_file;
+    boolean cstdio_in_file;
+    boolean hybrid_in_file;
 
     parse_command_line_options(argc, argv);
     k = reservoir_sample_client_global_args.k;
     in_filename = reservoir_sample_client_global_args.filenames[0];
     mmap_in_file = reservoir_sample_client_global_args.mmap;
+    cstdio_in_file = reservoir_sample_client_global_args.cstdio;
+    hybrid_in_file = reservoir_sample_client_global_args.hybrid;
     shuffle_output = reservoir_sample_client_global_args.shuffle;
 
     if ((k <= 0) || (!in_filename)) {
@@ -24,30 +28,43 @@ int main(int argc, char** argv)
     srand(time(NULL));
 
     reservoir_ptr = new_reservoir_ptr(k);
-    if (!mmap_in_file)
+
+    if (hybrid_in_file)
         reservoir_sample_input_via_cstdio(in_filename, &reservoir_ptr);
-    else {
+    else if (cstdio_in_file)
+        reservoir_sample_input_via_cstdio(in_filename, &reservoir_ptr);
+    else if (mmap_in_file) {
         in_file_mmap_ptr = new_file_mmap(in_filename);
         reservoir_sample_input_via_mmap(in_file_mmap_ptr, &reservoir_ptr);
     }
+
 #ifdef DEBUG
     print_reservoir_ptr(reservoir_ptr);
 #endif
-    if (!shuffle_output)
+
+    if (!shuffle_output) {
         sort_reservoir_ptr_offset_node_ptrs(&reservoir_ptr);
 #ifdef DEBUG
-    print_reservoir_ptr(reservoir_ptr);
+        print_reservoir_ptr(reservoir_ptr);
 #endif
-    if (!mmap_in_file) {
+    }
+
+    if (hybrid_in_file) {
+        in_file_mmap_ptr = new_file_mmap(in_filename);
+        print_reservoir_sample_via_mmap(in_file_mmap_ptr, reservoir_ptr);
+        free_file_mmap(&in_file_mmap_ptr);
+    }
+    else if (cstdio_in_file) {
         if (!shuffle_output)
             print_sorted_reservoir_sample_via_cstdio(in_filename, reservoir_ptr);
         else
             print_unsorted_reservoir_sample_via_cstdio(in_filename, reservoir_ptr);
     }
-    else {
+    else if (mmap_in_file) {
         print_reservoir_sample_via_mmap(in_file_mmap_ptr, reservoir_ptr);
         free_file_mmap(&in_file_mmap_ptr);
     }
+
     free_reservoir_ptr(&reservoir_ptr);
 
     return EXIT_SUCCESS;
@@ -394,7 +411,8 @@ void free_reservoir_ptr(reservoir **res_ptr)
 void initialize_globals()
 {
     reservoir_sample_client_global_args.shuffle = kFalse;
-    reservoir_sample_client_global_args.mmap = kTrue;
+    reservoir_sample_client_global_args.hybrid = kTrue;
+    reservoir_sample_client_global_args.mmap = kFalse;
     reservoir_sample_client_global_args.cstdio = kFalse;
     reservoir_sample_client_global_args.k = 0;
     reservoir_sample_client_global_args.filenames = NULL;
@@ -427,13 +445,20 @@ void parse_command_line_options(int argc, char **argv)
                 case 's':
                     reservoir_sample_client_global_args.shuffle = kTrue;
                     break;
+                case 'y':
+                    reservoir_sample_client_global_args.hybrid = kTrue;
+                    reservoir_sample_client_global_args.mmap = kFalse;
+                    reservoir_sample_client_global_args.cstdio = kFalse;
+                    break;
                 case 'm':
                     reservoir_sample_client_global_args.mmap = kTrue;
+                    reservoir_sample_client_global_args.hybrid = kFalse;
                     reservoir_sample_client_global_args.cstdio = kFalse;
                     break;
                 case 'c':
-                    reservoir_sample_client_global_args.mmap = kFalse;
                     reservoir_sample_client_global_args.cstdio = kTrue;
+                    reservoir_sample_client_global_args.hybrid = kFalse;
+                    reservoir_sample_client_global_args.mmap = kFalse;
                     break;
                 case 'h':
                     print_usage(stdout);
