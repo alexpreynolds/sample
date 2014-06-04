@@ -24,17 +24,12 @@ extern const boolean kFalse;
 const boolean kTrue = 1;
 const boolean kFalse = 0;
 
-typedef struct offset_node offset_node;
-typedef struct reservoir reservoir;
+typedef struct offset_reservoir offset_reservoir;
 typedef struct file_mmap file_mmap;
 
-struct offset_node {
-    off_t start_offset;
-};
-
-struct reservoir {
+struct offset_reservoir {
     long length;
-    offset_node **off_node_ptrs;
+    off_t *offsets;
 };
 
 struct file_mmap {
@@ -59,9 +54,9 @@ static const char *usage = "\n" \
     "  Process Flags:\n\n" \
     "  --sample-size=n | -k n      Number of samples to retrieve (n = positive integer)\n" \
     "  --shuffle       | -s        Shuffle sample before printing to standard output (optional)\n" \
-    "  --hybrid        | -y        Use hybrid of C I/O routines and memory mapping for handling input file (default)\n" \
-    "  --mmap          | -m        Use memory mapping for handling input file (optional)\n" \
+    "  --mmap          | -m        Use memory mapping for handling input file (default)\n" \
     "  --cstdio        | -c        Use C I/O routines for handling input file (optional)\n" \
+    "  --hybrid        | -y        Use hybrid of C I/O routines and memory mapping for handling input file (optional)\n" \
     "  --help          | -h        Show this usage message\n";
 
 static struct reservoir_sample_client_global_args_t {
@@ -86,19 +81,18 @@ static struct option reservoir_sample_client_long_options[] = {
 
 static const char *reservoir_sample_client_opt_string = "k:symch?";
 
+offset_reservoir * new_offset_reservoir_ptr(const long len);
+void free_offset_reservoir_ptr(offset_reservoir **res_ptr);
+void print_offset_reservoir_ptr(const offset_reservoir *res_ptr);
+void offset_reservoir_sample_input_via_cstdio(const char *in_fn, offset_reservoir **res_ptr);
+void offset_reservoir_sample_input_via_mmap(file_mmap *in_mmap, offset_reservoir **res_ptr);
+void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr);
+int offset_compare(const void *off1, const void *off2);
+void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_reservoir *res_ptr);
+void print_sorted_offset_reservoir_sample_via_cstdio(const char *in_fn, offset_reservoir *res_ptr);
+void print_unsorted_offset_reservoir_sample_via_cstdio(const char *in_fn, offset_reservoir *res_ptr);
 file_mmap * new_file_mmap(const char *in_fn);
 void free_file_mmap(file_mmap **mmap_ptr);
-void print_sorted_reservoir_sample_via_cstdio(const char *in_fn, reservoir *res_ptr);
-void print_unsorted_reservoir_sample_via_cstdio(const char *in_fn, reservoir *res_ptr);
-void print_reservoir_sample_via_mmap(const file_mmap *in_mmap, reservoir *res_ptr);
-void sort_reservoir_ptr_offset_node_ptrs(reservoir **res_ptr);
-int node_ptr_offset_compare(const void *off1, const void *off2);
-void reservoir_sample_input_via_cstdio(const char *in_fn, reservoir **res_ptr);
-void reservoir_sample_input_via_mmap(file_mmap *in_mmap, reservoir **res_ptr);
-reservoir * new_reservoir_ptr(const long len);
-offset_node * new_offset_node_ptr(const off_t val);
-void print_reservoir_ptr(const reservoir *res_ptr);
-void free_reservoir_ptr(reservoir **res_ptr);
 void initialize_globals();
 void parse_command_line_options(int argc, char **argv);
 void print_usage(FILE *stream);
