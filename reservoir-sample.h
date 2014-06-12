@@ -29,8 +29,7 @@ typedef struct offset_reservoir offset_reservoir;
 typedef struct file_mmap file_mmap;
 
 struct offset_reservoir {
-    long k;
-    long offsets_length;
+    long num_offsets;
     off_t *offsets;
 };
 
@@ -47,7 +46,7 @@ static const char *name = "reservoir-sample";
 static const char *version = RS_VERSION;
 static const char *authors = "Alex Reynolds";
 static const char *usage = "\n" \
-    "Usage: reservoir-sample [--sample-size=n] [--sample-without-replacement | --sample-with-replacement] [--shuffle] [--hybrid | --mmap | --cstdio] <newline-delimited-file>\n" \
+    "Usage: reservoir-sample [--sample-size=n] [--sample-without-replacement | --sample-with-replacement] [--shuffle | --preserve-order] [--hybrid | --mmap | --cstdio] <newline-delimited-file>\n" \
     "\n" \
     "  Performs reservoir sampling (http://dx.doi.org/10.1145/3147.3165) on very large input\n" \
     "  files that are delimited by newline characters. The approach used in this application\n" \
@@ -57,7 +56,8 @@ static const char *usage = "\n" \
     "  --sample-size=n               | -k n    Number of samples to retrieve (n = positive integer; optional)\n" \
     "  --sample-without-replacement  | -o      Sample without replacement (default)\n" \
     "  --sample-with-replacement     | -r      Sample with replacement (optional)\n" \
-    "  --shuffle                     | -s      Shuffle sample before printing to standard output (optional)\n" \
+    "  --shuffle                     | -s      Shuffle sample before printing to standard output (default)\n" \
+    "  --preserve-order              | -p      Preserve sample order before printing to standard output (optional)\n" \
     "  --mmap                        | -m      Use memory mapping for handling input file (default)\n" \
     "  --cstdio                      | -c      Use C I/O routines for handling input file (optional)\n" \
     "  --hybrid                      | -y      Use hybrid of C I/O routines and memory mapping for handling input file (optional)\n" \
@@ -65,6 +65,7 @@ static const char *usage = "\n" \
 
 static struct reservoir_sample_client_global_args_t {
     boolean shuffle;
+    boolean preserve_order;
     boolean hybrid;
     boolean mmap;
     boolean cstdio;
@@ -81,6 +82,7 @@ static struct option reservoir_sample_client_long_options[] = {
     { "sample-without-replacement",	no_argument,		NULL,	'o' },
     { "sample-with-replacement",	no_argument,		NULL,	'r' },
     { "shuffle",			no_argument,		NULL,	's' },
+    { "preserve-order",			no_argument,		NULL,	'p' },
     { "hybrid",	        		no_argument,		NULL,	'y' },
     { "mmap",	        		no_argument,		NULL,	'm' },
     { "cstdio",	        		no_argument,		NULL,	'c' },
@@ -88,13 +90,15 @@ static struct option reservoir_sample_client_long_options[] = {
     { NULL,				no_argument,		NULL,	 0  }
 }; 
 
-static const char *reservoir_sample_client_opt_string = "k:orsymch?";
+static const char *reservoir_sample_client_opt_string = "k:orspymch?";
 
 offset_reservoir * new_offset_reservoir_ptr(const long len);
 void free_offset_reservoir_ptr(offset_reservoir **res_ptr);
 void print_offset_reservoir_ptr(const offset_reservoir *res_ptr);
-void offset_reservoir_sample_input_via_cstdio(const char *in_fn, offset_reservoir **res_ptr);
-void offset_reservoir_sample_input_via_mmap(file_mmap *in_mmap, offset_reservoir **res_ptr);
+void offset_reservoir_sample_input_via_cstdio_with_fixed_k(const char *in_fn, offset_reservoir **res_ptr);
+void offset_reservoir_shuffle_input_via_cstdio_with_unspecified_k(const char *in_fn, offset_reservoir **res_ptr);
+void offset_reservoir_sample_input_via_mmap_with_fixed_k(file_mmap *in_mmap, offset_reservoir **res_ptr);
+void offset_reservoir_sample_input_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr);
 void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr);
 int offset_compare(const void *off1, const void *off2);
 void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_reservoir *res_ptr);

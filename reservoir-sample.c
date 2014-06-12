@@ -6,12 +6,13 @@ int main(int argc, char** argv)
     offset_reservoir *offset_reservoir_ptr = NULL;
     char *in_filename = NULL;
     file_mmap *in_file_mmap_ptr = NULL;
-    boolean shuffle_output;
+    boolean preserve_output_order;
     boolean mmap_in_file;
     boolean cstdio_in_file;
     boolean hybrid_in_file;
     boolean sample_without_replacement;
     boolean sample_with_replacement;
+    boolean sample_size_specified;
 
     parse_command_line_options(argc, argv);
     k = reservoir_sample_client_global_args.k;
@@ -19,9 +20,10 @@ int main(int argc, char** argv)
     mmap_in_file = reservoir_sample_client_global_args.mmap;
     cstdio_in_file = reservoir_sample_client_global_args.cstdio;
     hybrid_in_file = reservoir_sample_client_global_args.hybrid;
-    shuffle_output = reservoir_sample_client_global_args.shuffle;
+    preserve_output_order = reservoir_sample_client_global_args.preserve_order;
     sample_without_replacement = reservoir_sample_client_global_args.sample_without_replacement;
     sample_with_replacement = reservoir_sample_client_global_args.sample_with_replacement;
+    sample_size_specified = reservoir_sample_client_global_args.sample_size_specified;
 
     if ((k <= 0) || (!in_filename)) {
         print_usage(stderr);
@@ -34,11 +36,21 @@ int main(int argc, char** argv)
     offset_reservoir_ptr = new_offset_reservoir_ptr(k);
 
     if (sample_without_replacement) {
-        if ((hybrid_in_file) || (cstdio_in_file))
-            offset_reservoir_sample_input_via_cstdio(in_filename, &offset_reservoir_ptr);
+        if ((hybrid_in_file) || (cstdio_in_file)) {
+            if (sample_size_specified)
+                offset_reservoir_sample_input_via_cstdio_with_fixed_k(in_filename, &offset_reservoir_ptr);
+            else
+                offset_reservoir_shuffle_input_via_cstdio_with_unspecified_k(in_filename, &offset_reservoir_ptr);
+        }
         else if (mmap_in_file) {
             in_file_mmap_ptr = new_file_mmap(in_filename);
-            offset_reservoir_sample_input_via_mmap(in_file_mmap_ptr, &offset_reservoir_ptr);
+            if (sample_size_specified)
+                offset_reservoir_sample_input_via_mmap_with_fixed_k(in_file_mmap_ptr, &offset_reservoir_ptr);
+            else {
+                /* offset_reservoir_sample_input_via_mmap_with_unspecified_k(in_filename, &offset_reservoir_ptr); */
+                fprintf(stderr, "Error: This application does not yet support sampling without replacement without specified k\n");
+                return EXIT_FAILURE;
+            }
         }
     }
     else if (sample_with_replacement) {
@@ -50,7 +62,7 @@ int main(int argc, char** argv)
     print_offset_reservoir_ptr(offset_reservoir_ptr);
 #endif
 
-    if (!shuffle_output) {
+    if (preserve_output_order) {
         sort_offset_reservoir_ptr_offsets(&offset_reservoir_ptr);
 #ifdef DEBUG
         print_offset_reservoir_ptr(offset_reservoir_ptr);
@@ -63,7 +75,7 @@ int main(int argc, char** argv)
         free_file_mmap(&in_file_mmap_ptr);
     }
     else if (cstdio_in_file) {
-        if (!shuffle_output)
+        if (preserve_output_order)
             print_sorted_offset_reservoir_sample_via_cstdio(in_filename, offset_reservoir_ptr);
         else
             print_unsorted_offset_reservoir_sample_via_cstdio(in_filename, offset_reservoir_ptr);
@@ -98,7 +110,8 @@ offset_reservoir * new_offset_reservoir_ptr(const long len)
         fprintf(stderr, "Debug: offset_reservoir instance res is NULL\n");
         exit(EXIT_FAILURE);
     }
-    res->offsets_length = len;
+
+    res->num_offsets = len;
     res->offsets = offsets;
 
     return res;
@@ -132,14 +145,14 @@ void print_offset_reservoir_ptr(const offset_reservoir *res_ptr)
 
     int idx;
 
-    for (idx = 0; idx < res_ptr->offsets_length; ++idx)
+    for (idx = 0; idx < res_ptr->num_offsets; ++idx)
         fprintf(stdout, "[%012d] %012lld\n", idx, (long long int) res_ptr->offsets[idx]);
 }
 
-void offset_reservoir_sample_input_via_cstdio(const char *in_fn, offset_reservoir **res_ptr)
+void offset_reservoir_sample_input_via_cstdio_with_fixed_k(const char *in_fn, offset_reservoir **res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: offset_reservoir_sample_input_offsets()\n");
+    fprintf(stderr, "Debug: offset_reservoir_sample_input_offsets_with_fixed_k()\n");
 #endif
 
     int not_stdin = 0;
@@ -147,10 +160,10 @@ void offset_reservoir_sample_input_via_cstdio(const char *in_fn, offset_reservoi
     char in_line[LINE_LENGTH_VALUE + 1];
     off_t start_offset = 0;
     off_t stop_offset = 0;
-    int k = (*res_ptr)->offsets_length;
+    long k = (*res_ptr)->num_offsets;
     double p_replacement = 0.0;
-    int rand_idx = 0;
-    int ln_idx = 0;
+    long rand_idx = 0;
+    long ln_idx = 0;
 
     not_stdin = strcmp(in_fn, "-");
     in_file_ptr = (not_stdin) ? fopen(in_fn, "r") : stdin;
@@ -161,6 +174,8 @@ void offset_reservoir_sample_input_via_cstdio(const char *in_fn, offset_reservoi
     }
     
     in_line[LINE_LENGTH_VALUE] = '1';
+
+    /* read offsets into reservoir, replacing random offsets when the line counter is greater than k */
     while (fgets(in_line, LINE_LENGTH_VALUE + 1, in_file_ptr)) 
         {
             if (ln_idx < k) {
@@ -189,21 +204,79 @@ void offset_reservoir_sample_input_via_cstdio(const char *in_fn, offset_reservoi
 
     /* for when there are fewer lines than the sample size */
     if (ln_idx < k)
-        (*res_ptr)->offsets_length = ln_idx;
+        (*res_ptr)->num_offsets = ln_idx;
 
     fclose(in_file_ptr);
 }
 
-void offset_reservoir_sample_input_via_mmap(file_mmap *in_mmap, offset_reservoir **res_ptr) 
+void offset_reservoir_shuffle_input_via_cstdio_with_unspecified_k(const char *in_fn, offset_reservoir **res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: offset_reservoir_sample_input_via_mmap()\n");
+    fprintf(stderr, "Debug: offset_reservoir_shuffle_input_via_cstdio_with_unspecified_k()\n");
+#endif
+    
+    int not_stdin = 0;
+    FILE *in_file_ptr = NULL;
+    char in_line[LINE_LENGTH_VALUE + 1];
+    off_t start_offset = 0;
+    off_t stop_offset = 0;
+    long k = (*res_ptr)->num_offsets;
+    long shuf_idx = 0;
+    long rand_idx = 0;
+    long ln_idx = 0;
+    off_t *resized_offsets = NULL;
+    off_t temp_offset = 0;
+
+    not_stdin = strcmp(in_fn, "-");
+    in_file_ptr = (not_stdin) ? fopen(in_fn, "r") : stdin;
+
+    if (in_file_ptr == stdin) {
+        fprintf(stderr, "Error: Stdin not yet supported with this function\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    in_line[LINE_LENGTH_VALUE] = '1';
+
+    /* read all offsets into reservoir, reallocating memory as needed */
+    while (fgets(in_line, LINE_LENGTH_VALUE + 1, in_file_ptr)) 
+        {
+            if (ln_idx == k) {
+                k += DEFAULT_SAMPLE_SIZE_INCREMENT;
+                resized_offsets = realloc((*res_ptr)->offsets, sizeof(off_t) * k);
+                if (!resized_offsets) {
+                    fprintf(stderr, "Error: Could not allocate memory for resized offset array\n");
+                    exit(EXIT_FAILURE);
+                }
+                (*res_ptr)->offsets = resized_offsets;
+            }
+            (*res_ptr)->offsets[ln_idx] = start_offset;
+            stop_offset = ftell(in_file_ptr);
+            start_offset = stop_offset;
+            ln_idx++;
+        }
+    (*res_ptr)->num_offsets = ln_idx;
+
+    /* shuffle offsets via Fisher-Yates */
+    for (shuf_idx = (ln_idx - 1); shuf_idx > 0; --shuf_idx) {
+        rand_idx = ((double) rand() / RAND_MAX) * shuf_idx;
+        temp_offset = (*res_ptr)->offsets[shuf_idx];
+        (*res_ptr)->offsets[shuf_idx] = (*res_ptr)->offsets[rand_idx];
+        (*res_ptr)->offsets[rand_idx] = temp_offset;
+    }
+
+    fclose(in_file_ptr);    
+}
+
+void offset_reservoir_sample_input_via_mmap_with_fixed_k(file_mmap *in_mmap, offset_reservoir **res_ptr) 
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: offset_reservoir_sample_input_via_mmap_with_fixed_k()\n");
 #endif
 
     size_t offset_idx;
     off_t start_offset = 0;
     off_t stop_offset = 0;
-    int k = (*res_ptr)->offsets_length;
+    int k = (*res_ptr)->num_offsets;
     int ln_idx = 0;
     double p_replacement = 0.0;
     int rand_idx = 0;
@@ -229,7 +302,14 @@ void offset_reservoir_sample_input_via_mmap(file_mmap *in_mmap, offset_reservoir
     }
 
     if (ln_idx < k)
-        (*res_ptr)->offsets_length = ln_idx;
+        (*res_ptr)->num_offsets = ln_idx;
+}
+
+void offset_reservoir_sample_input_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr) 
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: offset_reservoir_sample_input_via_mmap_with_unspecified_k()\n");
+#endif
 }
 
 void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr) 
@@ -237,7 +317,7 @@ void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr)
 #ifdef DEBUG
     fprintf(stderr, "Debug: sort_offset_reservoir_ptr_offsets()\n");
 #endif
-    qsort( (*res_ptr)->offsets, (*res_ptr)->offsets_length, sizeof(off_t), offset_compare );
+    qsort( (*res_ptr)->offsets, (*res_ptr)->num_offsets, sizeof(off_t), offset_compare );
 }
 
 int offset_compare(const void *off1, const void *off2)
@@ -260,7 +340,7 @@ void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_res
     off_t mmap_idx;
     off_t current_offset;
     
-    for (res_idx = 0; res_idx < res_ptr->offsets_length; ++res_idx) {
+    for (res_idx = 0; res_idx < res_ptr->num_offsets; ++res_idx) {
         current_offset = res_ptr->offsets[res_idx];
         for (mmap_idx = current_offset; mmap_idx < current_offset + LINE_LENGTH_VALUE; ++mmap_idx) {
             fprintf(stdout, "%c", in_mmap->map[mmap_idx]);
@@ -291,7 +371,7 @@ void print_sorted_offset_reservoir_sample_via_cstdio(const char *in_fn, offset_r
         exit(EXIT_FAILURE);
     }
 
-    for (idx = 0; idx < res_ptr->offsets_length; ++idx) {
+    for (idx = 0; idx < res_ptr->num_offsets; ++idx) {
         /* 
            we use SEEK_CUR to jump from wherever the file pointer is now, instead of 
            from the start of the file -- we can do this because the offsets are in
@@ -326,7 +406,7 @@ void print_unsorted_offset_reservoir_sample_via_cstdio(const char *in_fn, offset
         exit(EXIT_FAILURE);
     }
 
-    for (idx = 0; idx < res_ptr->offsets_length; ++idx) {
+    for (idx = 0; idx < res_ptr->num_offsets; ++idx) {
         /* 
            we use SEEK_SET to jump from the start of the file, as the offsets are unsorted
         */
@@ -403,7 +483,8 @@ void initialize_globals()
     reservoir_sample_client_global_args.sample_size_specified = kFalse;
     reservoir_sample_client_global_args.sample_without_replacement = kTrue;
     reservoir_sample_client_global_args.sample_with_replacement = kFalse;
-    reservoir_sample_client_global_args.shuffle = kFalse;
+    reservoir_sample_client_global_args.shuffle = kTrue;
+    reservoir_sample_client_global_args.preserve_order = kFalse;
     reservoir_sample_client_global_args.hybrid = kFalse;
     reservoir_sample_client_global_args.mmap = kTrue;
     reservoir_sample_client_global_args.cstdio = kFalse;
@@ -425,11 +506,12 @@ void parse_command_line_options(int argc, char **argv)
                                  reservoir_sample_client_long_options, 
                                  &client_long_index);
 
+    int order_type_flags = 0;
     int sample_type_flags = 0;
     int io_type_flags = 0;
     int sample_size_flag = kFalse;
 
-    opterr = 0; /* disable error reporting by GNU getopt -- we handle this */
+    opterr = 0; /* disable error reporting by GNU getopt */
     initialize_globals();
     
     while (client_opt != -1) 
@@ -451,6 +533,13 @@ void parse_command_line_options(int argc, char **argv)
                     break;
                 case 's':
                     reservoir_sample_client_global_args.shuffle = kTrue;
+                    reservoir_sample_client_global_args.preserve_order = kFalse;
+                    order_type_flags++;
+                    break;
+                case 'p':
+                    reservoir_sample_client_global_args.preserve_order = kTrue;
+                    reservoir_sample_client_global_args.shuffle = kFalse;
+                    order_type_flags++;
                     break;
                 case 'y':
                     reservoir_sample_client_global_args.hybrid = kTrue;
@@ -487,11 +576,13 @@ void parse_command_line_options(int argc, char **argv)
 
     /* check input */
 
-    if (!sample_size_flag) {
+    if (!sample_size_flag)
         reservoir_sample_client_global_args.k += DEFAULT_SAMPLE_SIZE_INCREMENT;
-    }
+    else
+        reservoir_sample_client_global_args.sample_size_specified = kTrue;
 
-    if ((sample_type_flags > 1) ||
+    if ((order_type_flags > 1) ||
+        (sample_type_flags > 1) ||
         (io_type_flags > 1) ||
         (reservoir_sample_client_global_args.k < 0) ||
         (reservoir_sample_client_global_args.num_filenames != 1))
