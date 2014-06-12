@@ -64,7 +64,6 @@ static const char *usage = "\n" \
     "  --help                        | -h      Show this usage message\n";
 
 static struct reservoir_sample_client_global_args_t {
-    boolean shuffle;
     boolean preserve_order;
     boolean hybrid;
     boolean mmap;

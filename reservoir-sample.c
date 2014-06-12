@@ -48,7 +48,7 @@ int main(int argc, char** argv)
                 offset_reservoir_sample_input_via_mmap_with_fixed_k(in_file_mmap_ptr, &offset_reservoir_ptr);
             else {
                 /* offset_reservoir_sample_input_via_mmap_with_unspecified_k(in_filename, &offset_reservoir_ptr); */
-                fprintf(stderr, "Error: This application does not yet support sampling without replacement without specified k\n");
+                fprintf(stderr, "Error: This application does not yet support mmap-sampling without replacement without specified k\n");
                 return EXIT_FAILURE;
             }
         }
@@ -483,7 +483,6 @@ void initialize_globals()
     reservoir_sample_client_global_args.sample_size_specified = kFalse;
     reservoir_sample_client_global_args.sample_without_replacement = kTrue;
     reservoir_sample_client_global_args.sample_with_replacement = kFalse;
-    reservoir_sample_client_global_args.shuffle = kTrue;
     reservoir_sample_client_global_args.preserve_order = kFalse;
     reservoir_sample_client_global_args.hybrid = kFalse;
     reservoir_sample_client_global_args.mmap = kTrue;
@@ -532,13 +531,11 @@ void parse_command_line_options(int argc, char **argv)
                     sample_type_flags++;
                     break;
                 case 's':
-                    reservoir_sample_client_global_args.shuffle = kTrue;
                     reservoir_sample_client_global_args.preserve_order = kFalse;
                     order_type_flags++;
                     break;
                 case 'p':
                     reservoir_sample_client_global_args.preserve_order = kTrue;
-                    reservoir_sample_client_global_args.shuffle = kFalse;
                     order_type_flags++;
                     break;
                 case 'y':
