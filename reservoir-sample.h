@@ -52,6 +52,8 @@ static const char *usage = "\n" \
     "  files that are delimited by newline characters. The approach used in this application\n" \
     "  reduces memory usage by storing a pool of byte offsets to the start of each line, instead\n" \
     "  of the line elements themselves.\n\n" \
+    "  If the sample size (--sample-size) parameter is omitted, then reservoir-sample will shuffle\n" \
+    "  the entire file.\n\n" \
     "  Process Flags:\n\n" \
     "  --sample-size=n               | -k n    Number of samples to retrieve (n = positive integer; optional)\n" \
     "  --sample-without-replacement  | -o      Sample without replacement (default)\n" \
@@ -97,7 +99,8 @@ void print_offset_reservoir_ptr(const offset_reservoir *res_ptr);
 void offset_reservoir_sample_input_via_cstdio_with_fixed_k(const char *in_fn, offset_reservoir **res_ptr);
 void offset_reservoir_shuffle_input_via_cstdio_with_unspecified_k(const char *in_fn, offset_reservoir **res_ptr);
 void offset_reservoir_sample_input_via_mmap_with_fixed_k(file_mmap *in_mmap, offset_reservoir **res_ptr);
-void offset_reservoir_sample_input_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr);
+void offset_reservoir_shuffle_input_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr);
+void shuffle_reservoir_via_fisher_yates(offset_reservoir **res_ptr);
 void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr);
 int offset_compare(const void *off1, const void *off2);
 void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_reservoir *res_ptr);
