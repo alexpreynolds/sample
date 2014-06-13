@@ -154,6 +154,7 @@ void delete_offset_reservoir_ptr(offset_reservoir **res_ptr)
     if ((*res_ptr)->offsets) {
         free((*res_ptr)->offsets);
         (*res_ptr)->offsets = NULL;
+        (*res_ptr)->num_offsets = 0;
     }
 
     free(*res_ptr);
