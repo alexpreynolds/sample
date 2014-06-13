@@ -34,7 +34,7 @@
         <h1>
 <a name="reservoir-sample" class="anchor" href="#reservoir-sample"><span class="octicon octicon-link"></span></a>reservoir-sample</h1>
 
-<p>Performs reservoir sampling (Vitter, "Random sampling with a reservoir"; cf. <a href="http://dx.doi.org/10.1145/3147.3165">http://dx.doi.org/10.1145/3147.3165</a>) on very large text files that are delimited by newline characters. The approach used in this application reduces memory usage by storing a pool of byte offsets to the start of each line, instead of the line elements themselves.</p>
+<p>Performs reservoir sampling (Vitter, "Random sampling with a reservoir"; cf. <a href="http://dx.doi.org/10.1145/3147.3165">http://dx.doi.org/10.1145/3147.3165</a>) on very large text files that are delimited by newline characters. The approach used in this application reduces memory usage by storing a pool of 8-byte offsets to the start of each line, instead of the line elements themselves.</p>
       </section>
     </div>
 
