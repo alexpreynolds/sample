@@ -54,8 +54,10 @@ static const char *usage = "\n" \
     "  of the line elements themselves.\n\n" \
     "  If the sample size (--sample-size) parameter is omitted, then reservoir-sample will shuffle\n" \
     "  the entire file.\n\n" \
+    "  For text files delimited by multiples of lines, specify a --lines-per-offset value.\n\n" \
     "  Process Flags:\n\n" \
     "  --sample-size=n               | -k n    Number of samples to retrieve (n = positive integer; optional)\n" \
+    "  --lines-per-offset=n          | -l n    Number of lines per offset (n = positive integer; optional, default=1)\n" \
     "  --sample-without-replacement  | -o      Sample without replacement (default)\n" \
     "  --sample-with-replacement     | -r      Sample with replacement (optional)\n" \
     "  --shuffle                     | -s      Shuffle sample before printing to standard output (default)\n" \
@@ -74,12 +76,14 @@ static struct reservoir_sample_client_global_args_t {
     boolean sample_with_replacement;
     boolean sample_size_specified;
     long k;
+    int lines_per_offset;
     char **filenames;
     int num_filenames;
 } reservoir_sample_client_global_args;
 
 static struct option reservoir_sample_client_long_options[] = {
     { "sample-size",			optional_argument,	NULL,	'k' },
+    { "lines-per-offset",		optional_argument,	NULL,	'l' },
     { "sample-without-replacement",	no_argument,		NULL,	'o' },
     { "sample-with-replacement",	no_argument,		NULL,	'r' },
     { "shuffle",			no_argument,		NULL,	's' },
@@ -91,21 +95,21 @@ static struct option reservoir_sample_client_long_options[] = {
     { NULL,				no_argument,		NULL,	 0  }
 }; 
 
-static const char *reservoir_sample_client_opt_string = "k:orspymch?";
+static const char *reservoir_sample_client_opt_string = "k:l:orspymch?";
 
 offset_reservoir * new_offset_reservoir_ptr(const long len);
 void free_offset_reservoir_ptr(offset_reservoir **res_ptr);
 void print_offset_reservoir_ptr(const offset_reservoir *res_ptr);
-void offset_reservoir_sample_input_via_cstdio_with_fixed_k(const char *in_fn, offset_reservoir **res_ptr);
-void offset_reservoir_shuffle_input_via_cstdio_with_unspecified_k(const char *in_fn, offset_reservoir **res_ptr);
-void offset_reservoir_sample_input_via_mmap_with_fixed_k(file_mmap *in_mmap, offset_reservoir **res_ptr);
-void offset_reservoir_shuffle_input_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr);
+void offset_reservoir_sample_input_via_cstdio_with_fixed_k(const char *in_fn, offset_reservoir **res_ptr, const int lines_per_offset);
+void offset_reservoir_shuffle_input_via_cstdio_with_unspecified_k(const char *in_fn, offset_reservoir **res_ptr, const int lines_per_offset);
+void offset_reservoir_sample_input_via_mmap_with_fixed_k(file_mmap *in_mmap, offset_reservoir **res_ptr, const int lines_per_offset);
+void offset_reservoir_shuffle_input_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr, const int lines_per_offset);
 void shuffle_reservoir_via_fisher_yates(offset_reservoir **res_ptr);
 void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr);
 int offset_compare(const void *off1, const void *off2);
-void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_reservoir *res_ptr);
-void print_sorted_offset_reservoir_sample_via_cstdio(const char *in_fn, offset_reservoir *res_ptr);
-void print_unsorted_offset_reservoir_sample_via_cstdio(const char *in_fn, offset_reservoir *res_ptr);
+void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_reservoir *res_ptr, const int lines_per_offset);
+void print_sorted_offset_reservoir_sample_via_cstdio(const char *in_fn, offset_reservoir *res_ptr, const int lines_per_offset);
+void print_unsorted_offset_reservoir_sample_via_cstdio(const char *in_fn, offset_reservoir *res_ptr, const int lines_per_offset);
 file_mmap * new_file_mmap(const char *in_fn);
 void free_file_mmap(file_mmap **mmap_ptr);
 void initialize_globals();
