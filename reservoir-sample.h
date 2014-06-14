@@ -60,8 +60,8 @@ static const char *usage = "\n" \
     "  --lines-per-offset=n          | -l n    Number of lines per offset (n = positive integer; optional, default=1)\n" \
     "  --sample-without-replacement  | -o      Sample without replacement (default)\n" \
     "  --sample-with-replacement     | -r      Sample with replacement (optional)\n" \
-    "  --shuffle                     | -s      Shuffle sample before printing to standard output (default)\n" \
-    "  --preserve-order              | -p      Preserve sample order before printing to standard output (optional)\n" \
+    "  --shuffle                     | -s      Shuffle sample written to standard output (default)\n" \
+    "  --preserve-order              | -p      Preserve order of sample written to standard output (optional)\n" \
     "  --mmap                        | -m      Use memory mapping for handling input file (default)\n" \
     "  --cstdio                      | -c      Use C I/O routines for handling input file (optional)\n" \
     "  --hybrid                      | -y      Use hybrid of C I/O routines and memory mapping for handling input file (optional)\n" \
