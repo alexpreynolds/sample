@@ -1,4 +1,5 @@
-#include "reservoir-sample.h"
+#include "sample.h"
+#include "mt19937.h"
 
 int main(int argc, char** argv) 
 {
@@ -14,6 +15,8 @@ int main(int argc, char** argv)
     boolean sample_without_replacement;
     boolean sample_with_replacement;
     boolean sample_size_specified;
+    int rng_seed_value;
+    boolean rng_seed_specified;
     int lines_per_offset;
 
     parse_command_line_options(argc, argv);
@@ -27,9 +30,14 @@ int main(int argc, char** argv)
     sample_with_replacement = reservoir_sample_client_global_args.sample_with_replacement;
     sample_size_specified = reservoir_sample_client_global_args.sample_size_specified;
     lines_per_offset = reservoir_sample_client_global_args.lines_per_offset;
+    rng_seed_value = reservoir_sample_client_global_args.rng_seed_value;
+    rng_seed_specified = reservoir_sample_client_global_args.rng_seed_specified;
 
-    /* seed the random number generator */
-    srand(time(NULL));
+    /* seed the Twister random number generator */
+    if (rng_seed_specified)
+        mt19937_seed_rng(rng_seed_value);
+    else
+        mt19937_seed_rng(time(NULL));
 
     /* set up a blank reservoir pool */
     offset_reservoir_ptr = new_offset_reservoir_ptr(k);
@@ -184,7 +192,7 @@ void sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(FILE *
     off_t stop_offset = 0;
     long k = (*res_ptr)->num_offsets;
     double p_replacement = 0.0;
-    long rand_idx = 0;
+    unsigned long rand_idx = 0;
     long ln_idx = 0;
     long grp_idx = 0;
 
@@ -204,8 +212,9 @@ void sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(FILE *
             }
             else {
                 p_replacement = (double) k / (grp_idx + 1);
-                rand_idx = rand() % k;
-                if (p_replacement > ((double) rand() / RAND_MAX)) {
+                //rand_idx = rand() % k;
+                rand_idx = mt19937_generate_random_ulong() % k;
+                if (p_replacement > mt19937_generate_random_double()) {
 #ifdef DEBUG
                     fprintf(stderr, "Debug: Replacing random offset %012ld for line %012ld with probability %f\n", rand_idx, grp_idx, p_replacement);
 #endif
@@ -319,8 +328,8 @@ void sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k(file_mma
                     }
                     else {
                         p_replacement = (double) k / (grp_idx + 1);
-                        rand_idx = rand() % k;
-                        if (p_replacement > ((double) rand() / RAND_MAX))
+                        rand_idx = mt19937_generate_random_ulong() % k;
+                        if (p_replacement > mt19937_generate_random_double())
                             (*res_ptr)->offsets[rand_idx] = start_offset;
                     }
                     stop_offset = offset_idx;
@@ -416,7 +425,7 @@ void sample_reservoir_offsets_with_replacement_with_fixed_k(offset_reservoir **r
        copy original offset values to sample reservoir's offsets array 
     */
     for (sample_offset_idx = 0; sample_offset_idx < sample_size - 1; ++sample_offset_idx) {
-        original_random_idx = ((double) rand() / RAND_MAX) * original_sample_size;
+        original_random_idx = mt19937_generate_random_double() * original_sample_size;
         sample_offset_reservoir_ptr->offsets[sample_offset_idx] = original_offset_reservoir_ptr->offsets[original_random_idx];
     }
 
@@ -441,7 +450,7 @@ void shuffle_reservoir_offsets_via_fisher_yates(offset_reservoir **res_ptr)
     
     /* cf. http://blog.codinghorror.com/the-danger-of-naivete/ for an interesting discussion about Fisher-Yates */
     for (shuf_idx = ln_idx - 1; shuf_idx > 0; --shuf_idx) {
-        rand_idx = ((double) rand() / RAND_MAX) * (shuf_idx + 1);
+        rand_idx = mt19937_generate_random_double() * (shuf_idx + 1);
         temp_offset = (*res_ptr)->offsets[shuf_idx];
         (*res_ptr)->offsets[shuf_idx] = (*res_ptr)->offsets[rand_idx];
         (*res_ptr)->offsets[rand_idx] = temp_offset;
@@ -656,6 +665,8 @@ void initialize_globals()
     reservoir_sample_client_global_args.cstdio = kFalse;
     reservoir_sample_client_global_args.k = 0;
     reservoir_sample_client_global_args.lines_per_offset = 1;
+    reservoir_sample_client_global_args.rng_seed_value = 1;
+    reservoir_sample_client_global_args.rng_seed_specified = kFalse;
     reservoir_sample_client_global_args.filenames = NULL;
     reservoir_sample_client_global_args.num_filenames = 0;
 }
@@ -723,6 +734,10 @@ void parse_command_line_options(int argc, char **argv)
                     reservoir_sample_client_global_args.mmap = kFalse;
                     io_type_flags++;
                     break;
+                case 'd':
+                    reservoir_sample_client_global_args.rng_seed_value = atoi(optarg);
+                    reservoir_sample_client_global_args.rng_seed_specified = kTrue;
+                    break;
                 case 'h':
                     print_usage(stdout);
                     exit(EXIT_SUCCESS);
@@ -754,7 +769,8 @@ void parse_command_line_options(int argc, char **argv)
         (io_type_flags > 1) ||
         (reservoir_sample_client_global_args.lines_per_offset < 1) ||
         (reservoir_sample_client_global_args.k < 1) ||
-        (reservoir_sample_client_global_args.num_filenames != 1))
+        (reservoir_sample_client_global_args.num_filenames != 1) ||
+        (reservoir_sample_client_global_args.rng_seed_value < 1))
         {
             print_usage(stderr);
             exit(EXIT_FAILURE);

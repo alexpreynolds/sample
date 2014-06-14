@@ -42,11 +42,11 @@ struct file_mmap {
     char *map;
 };
 
-static const char *name = "reservoir-sample";
+static const char *name = "sample";
 static const char *version = RS_VERSION;
 static const char *authors = "Alex Reynolds";
 static const char *usage = "\n" \
-    "Usage: reservoir-sample [--sample-size=n] [--sample-without-replacement | --sample-with-replacement] [--shuffle | --preserve-order] [--hybrid | --mmap | --cstdio] <newline-delimited-file>\n" \
+    "Usage: sample [--sample-size=n] [--sample-without-replacement | --sample-with-replacement] [--shuffle | --preserve-order] [--hybrid | --mmap | --cstdio] <newline-delimited-file>\n" \
     "\n" \
     "  Performs reservoir sampling (http://dx.doi.org/10.1145/3147.3165) on very large input\n" \
     "  files that are delimited by newline characters. The approach used in this application\n" \
@@ -65,6 +65,7 @@ static const char *usage = "\n" \
     "  --mmap                        | -m      Use memory mapping for handling input file (default)\n" \
     "  --cstdio                      | -c      Use C I/O routines for handling input file (optional)\n" \
     "  --hybrid                      | -y      Use hybrid of C I/O routines and memory mapping for handling input file (optional)\n" \
+    "  --seed-rng=n                  | -d n    Initialize the Twister RNG with a specific seed value (optional)\n" \
     "  --help                        | -h      Show this usage message\n";
 
 static struct reservoir_sample_client_global_args_t {
@@ -77,6 +78,8 @@ static struct reservoir_sample_client_global_args_t {
     boolean sample_size_specified;
     long k;
     int lines_per_offset;
+    int rng_seed_value;
+    boolean rng_seed_specified;
     char **filenames;
     int num_filenames;
 } reservoir_sample_client_global_args;
@@ -91,11 +94,12 @@ static struct option reservoir_sample_client_long_options[] = {
     { "hybrid",	        		no_argument,		NULL,	'y' },
     { "mmap",	        		no_argument,		NULL,	'm' },
     { "cstdio",	        		no_argument,		NULL,	'c' },
+    { "seed-rng",			required_argument,	NULL,	'd' },
     { "help",				no_argument,		NULL,	'h' },
     { NULL,				no_argument,		NULL,	 0  }
 }; 
 
-static const char *reservoir_sample_client_opt_string = "k:l:orspymch?";
+static const char *reservoir_sample_client_opt_string = "k:l:orspymcdh?";
 
 offset_reservoir * new_offset_reservoir_ptr(const long len);
 void delete_offset_reservoir_ptr(offset_reservoir **res_ptr);
