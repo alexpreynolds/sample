@@ -7,7 +7,7 @@ In its current form, this application offers a few advantages over common `shuf`
 
 * On small *k*, it performs roughly 2.25-2.75x faster than `shuf` in informal tests on OS X and Linux hosts.
 * It uses much less memory than the usual reservoir sampling approach that stores a pool of sampled elements; instead, `reservoir-sample` stores the start positions of sampled lines (8 bytes per line).
-* Using less memory gives `reservoir-sample` an advantage over `shuf` for whole-genome scale files, helping avoid `shuf: memory exhausted` errors. For instance, a 2 GB allocation would allow a sample size up to ~268M random elements (regardless of line length).
+* Using less memory gives `reservoir-sample` an advantage over `shuf` for whole-genome scale files, helping avoid `shuf: memory exhausted` errors. For instance, a 2 GB allocation would allow a sample size up to ~268M random elements (sampling without replacement).
 
 The `reservoir-sample` tool stores a pool of line positions and makes two passes through the input file. One pass generates the sample of random positions, while the second pass uses those positions to print the sample to standard output. To minimize the expense of this second pass, we use `mmap` routines to gain random access to data in the (regular) input file on both passes.
 
