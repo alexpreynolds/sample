@@ -1,11 +1,14 @@
 /* 
    A C-program for MT19937: Real number version
 
-   genrand() generates one pseudorandom real number (double) 
-   which is uniformly distributed on [0,1]-interval, for each 
-   call. sgenrand(seed) set initial values to the working area
-   of 624 words. Before genrand(), sgenrand(seed) must be
-   called once. (seed is any 32-bit integer except for 0).
+   mt19937_generate_random_double() generates one pseudorandom 
+   real number (double) which is uniformly distributed on 
+   [0,1]-interval, for each call. 
+   
+   mt19937_seed_rng(seed) set initial values to the working area
+   of 624 words. Before mt19937_generate_random_double(), 
+   mt19937_seed_rng(seed) must be called once. (seed is any 
+   32-bit integer except for 0).
 
    Coded by Takuji Nishimura, considering the suggestions by 
    Topher Cooper and Marc Rieffel in July-Aug. 1997.
