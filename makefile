@@ -1,18 +1,30 @@
 BLDFLAGS                  = -Wall -Wextra -pedantic -std=c99
 CFLAGS                    = -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -O3
 CDFLAGS                   = -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -DDEBUG=1 -g -O0 -fno-inline
-BINDIR                    = ../bin
-PROG                      = reservoir-sample
-SOURCE                    = reservoir-sample.c
+INCLUDES                 := -iquote${PWD}
+OBJDIR                    = objects
+SAMPLELIB                := $(PWD)/sample-library.a
+PROG                      = sample
+SOURCE                    = sample.c
 
-all: build
+all: mt19937 sample-library build
 
-build:
-	mkdir -p $(BINDIR) && ${CC} ${BLDFLAGS} ${CFLAGS} -o ${BINDIR}/${PROG} ${SOURCE}
+mt19937:
+	mkdir -p $(OBJDIR) && $(CC) $(BLDFLAGS) $(CFLAGS) -c mt19937.c -o $(OBJDIR)/mt19937.o $(INCLUDES)
 
-debug:
-	mkdir -p $(BINDIR) && ${CC} ${BLDFLAGS} ${CDFLAGS} -o ${BINDIR}/${PROG} ${SOURCE}
+sample-library: mt19937
+	$(AR) rcs $(SAMPLELIB) $(OBJDIR)/mt19937.o
+
+build: sample-library
+	$(CC) $(BLDFLAGS) $(CFLAGS) -c $(SOURCE) -o $(OBJDIR)/$(PROG).o $(INCLUDES)
+	$(CC) $(BLDFLAGS) $(CFLAGS) $(OBJDIR)/$(PROG).o -o $(PROG) $(SAMPLELIB)
+
+debug: sample-library
+	$(CC) $(BLDFLAGS) $(CDFLAGS) -c $(SOURCE) -o $(OBJDIR)/$(PROG).o $(INCLUDES)
+	$(CC) $(BLDFLAGS) $(CDFLAGS) $(OBJDIR)/$(PROG).o -o $(PROG) $(SAMPLELIB)
 
 clean:
-	rm -f $(BINDIR)/$(PROG)
-	rm -f *~
+	rm -f $(PROG)
+	rm -rf $(OBJDIR)
+	rm -f $(SAMPLELIB)
+	rm -rf *~

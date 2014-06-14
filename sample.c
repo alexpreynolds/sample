@@ -691,7 +691,7 @@ void parse_command_line_options(int argc, char **argv)
 
     opterr = 0; /* disable error reporting by GNU getopt */
     initialize_globals();
-    
+
     while (client_opt != -1) 
         {
             switch (client_opt) 
