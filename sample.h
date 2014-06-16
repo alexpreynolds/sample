@@ -46,7 +46,7 @@ static const char *name = "sample";
 static const char *version = RS_VERSION;
 static const char *authors = "Alex Reynolds";
 static const char *usage = "\n" \
-    "Usage: sample [--sample-size=n] [--sample-without-replacement | --sample-with-replacement] [--shuffle | --preserve-order] [--hybrid | --mmap | --cstdio] <newline-delimited-file>\n" \
+    "Usage: sample [--sample-size=n] [--lines-per-offset=n] [--sample-without-replacement | --sample-with-replacement] [--shuffle | --preserve-order] [--hybrid | --mmap | --cstdio] [--rng-seed=n] <newline-delimited-file>\n" \
     "\n" \
     "  Performs reservoir sampling (http://dx.doi.org/10.1145/3147.3165) on very large input\n" \
     "  files that are delimited by newline characters. The approach used in this application\n" \
@@ -65,7 +65,7 @@ static const char *usage = "\n" \
     "  --mmap                        | -m      Use memory mapping for handling input file (default)\n" \
     "  --cstdio                      | -c      Use C I/O routines for handling input file (optional)\n" \
     "  --hybrid                      | -y      Use hybrid of C I/O routines and memory mapping for handling input file (optional)\n" \
-    "  --rng-seed=n                  | -d n    Initialize the Twister RNG with a specific seed value (optional)\n" \
+    "  --rng-seed=n                  | -d n    Initialize the Twister RNG with a specific seed value (n = positive integer; optional)\n" \
     "  --help                        | -h      Show this usage message\n";
 
 static struct sample_global_args_t {
