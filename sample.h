@@ -52,7 +52,7 @@ static const char *usage = "\n" \
     "  files that are delimited by newline characters. The approach used in this application\n" \
     "  reduces memory usage by storing a pool of byte offsets to the start of each line, instead\n" \
     "  of the line elements themselves.\n\n" \
-    "  If the sample size (--sample-size) parameter is omitted, then reservoir-sample will shuffle\n" \
+    "  If the sample size (--sample-size) parameter is omitted, then the sample binary will shuffle\n" \
     "  the entire file.\n\n" \
     "  For text files delimited by multiples of lines, specify a --lines-per-offset value.\n\n" \
     "  Process Flags:\n\n" \
