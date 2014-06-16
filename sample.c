@@ -20,18 +20,18 @@ int main(int argc, char** argv)
     int lines_per_offset;
 
     parse_command_line_options(argc, argv);
-    k = reservoir_sample_client_global_args.k;
-    in_filename = reservoir_sample_client_global_args.filenames[0];
-    mmap_in_file = reservoir_sample_client_global_args.mmap;
-    cstdio_in_file = reservoir_sample_client_global_args.cstdio;
-    hybrid_in_file = reservoir_sample_client_global_args.hybrid;
-    preserve_output_order = reservoir_sample_client_global_args.preserve_order;
-    sample_without_replacement = reservoir_sample_client_global_args.sample_without_replacement;
-    sample_with_replacement = reservoir_sample_client_global_args.sample_with_replacement;
-    sample_size_specified = reservoir_sample_client_global_args.sample_size_specified;
-    lines_per_offset = reservoir_sample_client_global_args.lines_per_offset;
-    rng_seed_value = reservoir_sample_client_global_args.rng_seed_value;
-    rng_seed_specified = reservoir_sample_client_global_args.rng_seed_specified;
+    k = sample_global_args.k;
+    in_filename = sample_global_args.filenames[0];
+    mmap_in_file = sample_global_args.mmap;
+    cstdio_in_file = sample_global_args.cstdio;
+    hybrid_in_file = sample_global_args.hybrid;
+    preserve_output_order = sample_global_args.preserve_order;
+    sample_without_replacement = sample_global_args.sample_without_replacement;
+    sample_with_replacement = sample_global_args.sample_with_replacement;
+    sample_size_specified = sample_global_args.sample_size_specified;
+    lines_per_offset = sample_global_args.lines_per_offset;
+    rng_seed_value = sample_global_args.rng_seed_value;
+    rng_seed_specified = sample_global_args.rng_seed_specified;
 
     /* seed the Twister random number generator */
     if (rng_seed_specified)
@@ -656,19 +656,19 @@ void delete_file_mmap(file_mmap **mmap_ptr)
 
 void initialize_globals()
 {
-    reservoir_sample_client_global_args.sample_size_specified = kFalse;
-    reservoir_sample_client_global_args.sample_without_replacement = kTrue;
-    reservoir_sample_client_global_args.sample_with_replacement = kFalse;
-    reservoir_sample_client_global_args.preserve_order = kFalse;
-    reservoir_sample_client_global_args.hybrid = kFalse;
-    reservoir_sample_client_global_args.mmap = kTrue;
-    reservoir_sample_client_global_args.cstdio = kFalse;
-    reservoir_sample_client_global_args.k = 0;
-    reservoir_sample_client_global_args.lines_per_offset = 1;
-    reservoir_sample_client_global_args.rng_seed_value = 1;
-    reservoir_sample_client_global_args.rng_seed_specified = kFalse;
-    reservoir_sample_client_global_args.filenames = NULL;
-    reservoir_sample_client_global_args.num_filenames = 0;
+    sample_global_args.sample_size_specified = kFalse;
+    sample_global_args.sample_without_replacement = kTrue;
+    sample_global_args.sample_with_replacement = kFalse;
+    sample_global_args.preserve_order = kFalse;
+    sample_global_args.hybrid = kFalse;
+    sample_global_args.mmap = kTrue;
+    sample_global_args.cstdio = kFalse;
+    sample_global_args.k = 0;
+    sample_global_args.lines_per_offset = 1;
+    sample_global_args.rng_seed_value = 1;
+    sample_global_args.rng_seed_specified = kFalse;
+    sample_global_args.filenames = NULL;
+    sample_global_args.num_filenames = 0;
 }
 
 void parse_command_line_options(int argc, char **argv)
@@ -680,8 +680,8 @@ void parse_command_line_options(int argc, char **argv)
     int client_long_index;
     int client_opt = getopt_long(argc, 
                                  argv, 
-                                 reservoir_sample_client_opt_string, 
-                                 reservoir_sample_client_long_options, 
+                                 sample_client_opt_string, 
+                                 sample_client_long_options, 
                                  &client_long_index);
 
     int order_type_flags = 0;
@@ -697,46 +697,46 @@ void parse_command_line_options(int argc, char **argv)
             switch (client_opt) 
                 {
                 case 'k':
-                    reservoir_sample_client_global_args.k = atoi(optarg);
+                    sample_global_args.k = atoi(optarg);
                     sample_size_flag = kTrue;
                     break;
                 case 'l':
-                    reservoir_sample_client_global_args.lines_per_offset = atoi(optarg);
+                    sample_global_args.lines_per_offset = atoi(optarg);
                     break;
                 case 'o':
-                    reservoir_sample_client_global_args.sample_without_replacement = kTrue;
+                    sample_global_args.sample_without_replacement = kTrue;
                     sample_type_flags++;
                     break;
                 case 'r':
-                    reservoir_sample_client_global_args.sample_with_replacement = kTrue;
-                    reservoir_sample_client_global_args.sample_without_replacement = kFalse;
+                    sample_global_args.sample_with_replacement = kTrue;
+                    sample_global_args.sample_without_replacement = kFalse;
                     sample_type_flags++;
                     break;
                 case 's':
-                    reservoir_sample_client_global_args.preserve_order = kFalse;
+                    sample_global_args.preserve_order = kFalse;
                     order_type_flags++;
                     break;
                 case 'p':
-                    reservoir_sample_client_global_args.preserve_order = kTrue;
+                    sample_global_args.preserve_order = kTrue;
                     order_type_flags++;
                     break;
                 case 'y':
-                    reservoir_sample_client_global_args.hybrid = kTrue;
-                    reservoir_sample_client_global_args.mmap = kFalse;
+                    sample_global_args.hybrid = kTrue;
+                    sample_global_args.mmap = kFalse;
                     io_type_flags++;
                     break;
                 case 'm':
-                    reservoir_sample_client_global_args.mmap = kTrue;
+                    sample_global_args.mmap = kTrue;
                     io_type_flags++;
                     break;
                 case 'c':
-                    reservoir_sample_client_global_args.cstdio = kTrue;
-                    reservoir_sample_client_global_args.mmap = kFalse;
+                    sample_global_args.cstdio = kTrue;
+                    sample_global_args.mmap = kFalse;
                     io_type_flags++;
                     break;
                 case 'd':
-                    reservoir_sample_client_global_args.rng_seed_value = atoi(optarg);
-                    reservoir_sample_client_global_args.rng_seed_specified = kTrue;
+                    sample_global_args.rng_seed_value = atoi(optarg);
+                    sample_global_args.rng_seed_specified = kTrue;
                     break;
                 case 'h':
                     print_usage(stdout);
@@ -749,28 +749,28 @@ void parse_command_line_options(int argc, char **argv)
                 }
             client_opt = getopt_long(argc, 
                                      argv, 
-                                     reservoir_sample_client_opt_string, 
-                                     reservoir_sample_client_long_options, 
+                                     sample_client_opt_string, 
+                                     sample_client_long_options, 
                                      &client_long_index);
         }
 
-    reservoir_sample_client_global_args.filenames = argv + optind;
-    reservoir_sample_client_global_args.num_filenames = argc - optind;
+    sample_global_args.filenames = argv + optind;
+    sample_global_args.num_filenames = argc - optind;
 
     /* check input */
 
     if (!sample_size_flag)
-        reservoir_sample_client_global_args.k += DEFAULT_SAMPLE_SIZE_INCREMENT;
+        sample_global_args.k += DEFAULT_SAMPLE_SIZE_INCREMENT;
     else
-        reservoir_sample_client_global_args.sample_size_specified = kTrue;
+        sample_global_args.sample_size_specified = kTrue;
 
     if ((order_type_flags > 1) ||
         (sample_type_flags > 1) ||
         (io_type_flags > 1) ||
-        (reservoir_sample_client_global_args.lines_per_offset < 1) ||
-        (reservoir_sample_client_global_args.k < 1) ||
-        (reservoir_sample_client_global_args.num_filenames != 1) ||
-        (reservoir_sample_client_global_args.rng_seed_value < 1))
+        (sample_global_args.lines_per_offset < 1) ||
+        (sample_global_args.k < 1) ||
+        (sample_global_args.num_filenames != 1) ||
+        (sample_global_args.rng_seed_value < 1))
         {
             print_usage(stderr);
             exit(EXIT_FAILURE);

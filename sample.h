@@ -68,7 +68,7 @@ static const char *usage = "\n" \
     "  --rng-seed=n                  | -d n    Initialize the Twister RNG with a specific seed value (optional)\n" \
     "  --help                        | -h      Show this usage message\n";
 
-static struct reservoir_sample_client_global_args_t {
+static struct sample_global_args_t {
     boolean preserve_order;
     boolean hybrid;
     boolean mmap;
@@ -82,9 +82,9 @@ static struct reservoir_sample_client_global_args_t {
     int num_filenames;
     int rng_seed_value;
     boolean rng_seed_specified;
-} reservoir_sample_client_global_args;
+} sample_global_args;
 
-static struct option reservoir_sample_client_long_options[] = {
+static struct option sample_client_long_options[] = {
     { "sample-size",			optional_argument,	NULL,	'k' },
     { "lines-per-offset",		optional_argument,	NULL,	'l' },
     { "sample-without-replacement",	no_argument,		NULL,	'o' },
@@ -99,7 +99,7 @@ static struct option reservoir_sample_client_long_options[] = {
     { NULL,				no_argument,		NULL,	 0  }
 }; 
 
-static const char *reservoir_sample_client_opt_string = "k:l:orspymcd:h?";
+static const char *sample_client_opt_string = "k:l:orspymcd:h?";
 
 offset_reservoir * new_offset_reservoir_ptr(const long len);
 void delete_offset_reservoir_ptr(offset_reservoir **res_ptr);
