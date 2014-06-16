@@ -39,6 +39,9 @@
 
 #include "mt19937.h"
 
+unsigned long mt[MT19937_N] = {0};
+int mti = MT19937_N + 1;
+
 /* initializing the array with a NONZERO seed */
 void mt19937_seed_rng(unsigned long seed)
 {

@@ -15,8 +15,8 @@
 #define MT19937_SHIFT_T(y)  (y << 15)
 #define MT19937_SHIFT_L(y)  (y >> 18)
 
-static unsigned long mt[MT19937_N]; /* the array for the state vector  */
-static int mti = MT19937_N + 1; /* mti==N+1 means mt[N] is not initialized */
+extern unsigned long mt[MT19937_N]; /* the array for the state vector  */
+extern int mti; /* mti == N+1 means mt[N] is not initialized */
 
 void mt19937_seed_rng(unsigned long seed);
 double mt19937_generate_random_double();
