@@ -1,3 +1,6 @@
+#ifndef MT19937_H
+#define MT19937_H
+
 #include <stdio.h>
 
 /* Period parameters */  
@@ -22,3 +25,4 @@ void mt19937_seed_rng(unsigned long seed);
 double mt19937_generate_random_double();
 unsigned long mt19937_generate_random_ulong();
 
+#endif
