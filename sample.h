@@ -101,6 +101,10 @@ static struct option sample_client_long_options[] = {
 
 static const char *sample_client_opt_string = "k:l:orspymcd:h?";
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 offset_reservoir * new_offset_reservoir_ptr(const long len);
 void delete_offset_reservoir_ptr(offset_reservoir **res_ptr);
 void print_offset_reservoir_ptr(const offset_reservoir *res_ptr);
@@ -126,5 +130,9 @@ void delete_file_mmap(file_mmap **mmap_ptr);
 void initialize_globals();
 void parse_command_line_options(int argc, char **argv);
 void print_usage(FILE *stream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
