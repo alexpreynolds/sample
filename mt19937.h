@@ -21,8 +21,16 @@
 extern unsigned long mt[MT19937_N]; /* the array for the state vector  */
 extern int mti; /* mti == N+1 means mt[N] is not initialized */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void mt19937_seed_rng(unsigned long seed);
 double mt19937_generate_random_double();
 unsigned long mt19937_generate_random_ulong();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
