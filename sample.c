@@ -512,7 +512,10 @@ void print_sorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset_r
     int temp_length = 0;
 
     /* position the file pointer at the start of the file */
-    rewind(in_file_ptr);
+    if (fseek(in_file_ptr, 0, SEEK_SET) == -1) {
+        fprintf(stderr, "Error: Could not rewind input file pointer\n");
+        exit(EXIT_FAILURE);
+    }
 
     for (idx = 0; idx < res_ptr->num_offsets; ++idx) {
         /* 
@@ -547,7 +550,10 @@ void print_unsorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset
     int temp_length = 0;
 
     /* position the file pointer at the start of the file */
-    rewind(in_file_ptr);
+    if (fseek(in_file_ptr, 0, SEEK_SET) == -1) {
+        fprintf(stderr, "Error: Could not rewind input file pointer\n");
+        exit(EXIT_FAILURE);
+    }
 
     for (idx = 0; idx < res_ptr->num_offsets; ++idx) {
         /* 
