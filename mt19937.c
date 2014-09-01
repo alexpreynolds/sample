@@ -45,6 +45,10 @@ int mti = MT19937_N + 1;
 /* initializing the array with a NONZERO seed */
 void mt19937_seed_rng(unsigned long seed)
 {
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Entering --> mt19937_seed_rng()\n");
+#endif
+
     /* 
        setting initial seeds to mt[N] using
        the generator Line 25 of Table 1 in
@@ -54,10 +58,18 @@ void mt19937_seed_rng(unsigned long seed)
     mt[0]= seed & 0xffffffff;
     for (mti = 1; mti < MT19937_N; ++mti)
         mt[mti] = (69069 * mt[mti - 1]) & 0xffffffff;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> mt19937_seed_rng()\n");
+#endif
 }
 
 double mt19937_generate_random_double()
 {
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Entering --> mt19937_generate_random_double()\n");
+#endif
+
     unsigned long y;
     static unsigned long mag01[2] = {0x0, MT19937_MATRIX_A};
     /* mag01[x] = x * MT19937_MATRIX_A  for x=0,1 */
@@ -93,12 +105,20 @@ double mt19937_generate_random_double()
     y ^= MT19937_SHIFT_S(y) & MT19937_MASK_B;
     y ^= MT19937_SHIFT_T(y) & MT19937_MASK_C;
     y ^= MT19937_SHIFT_L(y);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> mt19937_generate_random_double()\n");
+#endif
 
     return (double) y / (unsigned long) 0xffffffff;
 }
 
 unsigned long mt19937_generate_random_ulong()
 {
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Entering --> mt19937_generate_random_ulong()\n");
+#endif
+
     unsigned long y;
     static unsigned long mag01[2] = {0x0, MT19937_MATRIX_A};
     /* mag01[x] = x * MT19937_MATRIX_A  for x=0,1 */
@@ -134,6 +154,10 @@ unsigned long mt19937_generate_random_ulong()
     y ^= MT19937_SHIFT_S(y) & MT19937_MASK_B;
     y ^= MT19937_SHIFT_T(y) & MT19937_MASK_C;
     y ^= MT19937_SHIFT_L(y);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> mt19937_generate_random_ulong()\n");
+#endif
 
     return y;
 }

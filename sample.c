@@ -3,6 +3,10 @@
 
 int main(int argc, char** argv) 
 {
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Entering --> main()\n");
+#endif
+
     long k;
     offset_reservoir *offset_reservoir_ptr = NULL;
     char *in_filename = NULL;
@@ -118,13 +122,17 @@ int main(int argc, char** argv)
     if (in_file_ptr)
         delete_file_ptr(&in_file_ptr);
 
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> main()\n");
+#endif
+
     return EXIT_SUCCESS;
 }
 
 offset_reservoir * new_offset_reservoir_ptr(const long len)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: new_offset_reservoir_ptr()\n");
+    fprintf(stderr, "Debug: Entering --> new_offset_reservoir_ptr()\n");
 #endif
 
     offset_reservoir *res = NULL;
@@ -145,13 +153,17 @@ offset_reservoir * new_offset_reservoir_ptr(const long len)
     res->num_offsets = len;
     res->offsets = offsets;
 
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> new_offset_reservoir_ptr()\n");
+#endif
+
     return res;
 }
 
 void delete_offset_reservoir_ptr(offset_reservoir **res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: delete_offset_reservoir_ptr()\n");
+    fprintf(stderr, "Debug: Entering --> delete_offset_reservoir_ptr()\n");
 #endif
 
     if (!*res_ptr) {
@@ -167,24 +179,32 @@ void delete_offset_reservoir_ptr(offset_reservoir **res_ptr)
 
     free(*res_ptr);
     *res_ptr = NULL;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> delete_offset_reservoir_ptr()\n");
+#endif
 }
 
 void print_offset_reservoir_ptr(const offset_reservoir *res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: print_offset_reservoir_ptr()\n");
+    fprintf(stderr, "Debug: Entering --> print_offset_reservoir_ptr()\n");
 #endif
 
     int idx;
 
     for (idx = 0; idx < res_ptr->num_offsets; ++idx)
         fprintf(stdout, "[%012d] %012lld\n", idx, (long long int) res_ptr->offsets[idx]);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving --> print_offset_reservoir_ptr()\n");
+#endif
 }
 
 void sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(FILE *in_file_ptr, offset_reservoir **res_ptr, const int lines_per_offset)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k()\n");
 #endif
 
     char in_line[LINE_LENGTH_VALUE + 1];
@@ -232,21 +252,29 @@ void sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(FILE *
     /* for when there are fewer line-groupings than the sample size */
     if (grp_idx < k)
         (*res_ptr)->num_offsets = grp_idx;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k()\n");
+#endif
 }
 
 void sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k(offset_reservoir **res_ptr, const int sample_size)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k()\n");
 #endif
 
     sample_reservoir_offsets_with_replacement_with_fixed_k(res_ptr, sample_size);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k()\n");
+#endif
 }
 
 void sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k(offset_reservoir **res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k()\n");
 #endif
 
     /* 
@@ -255,12 +283,16 @@ void sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k(off
        the application's memory usage)
     */
     sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k(res_ptr, (*res_ptr)->num_offsets);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k()\n");
+#endif
 }
 
 void sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k(FILE *in_file_ptr, offset_reservoir **res_ptr, const int lines_per_offset)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k()\n");
 #endif
     
     char in_line[LINE_LENGTH_VALUE + 1];
@@ -296,12 +328,16 @@ void sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k(
         }
 
     (*res_ptr)->num_offsets = grp_idx;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k()\n");
+#endif
 }
 
 void sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k(file_mmap *in_mmap, offset_reservoir **res_ptr, const int lines_per_offset) 
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k()\n");
 #endif
 
     size_t offset_idx;
@@ -340,12 +376,16 @@ void sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k(file_mma
 
     if (grp_idx < k)
         (*res_ptr)->num_offsets = grp_idx;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k()\n");
+#endif
 }
 
 void sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr, const int lines_per_offset) 
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k()\n");
 #endif
 
     size_t offset_idx;
@@ -380,21 +420,29 @@ void sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k(fi
                 }
         }
     (*res_ptr)->num_offsets = grp_idx;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k()\n");
+#endif
 }
 
 void sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k(offset_reservoir **res_ptr, const int sample_size)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k()\n");
 #endif
 
     sample_reservoir_offsets_with_replacement_with_fixed_k(res_ptr, sample_size);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k()\n");
+#endif
 }
 
 void sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k(offset_reservoir **res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k()\n");
 #endif
 
     /* 
@@ -403,12 +451,16 @@ void sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k(offse
        the application's memory usage)
     */
     sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k(res_ptr, (*res_ptr)->num_offsets);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k()\n");
+#endif
 }
 
 void sample_reservoir_offsets_with_replacement_with_fixed_k(offset_reservoir **res_ptr, const int sample_size)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sample_reservoir_offsets_with_replacement_with_fixed_k()\n");
+    fprintf(stderr, "Debug: Entering --> sample_reservoir_offsets_with_replacement_with_fixed_k()\n");
 #endif
 
     offset_reservoir *original_offset_reservoir_ptr = *res_ptr;
@@ -434,13 +486,17 @@ void sample_reservoir_offsets_with_replacement_with_fixed_k(offset_reservoir **r
     original_offset_reservoir_ptr = NULL;
 
     /* point the current reservoir pointer at the new sample reservoir */
-    *res_ptr = sample_offset_reservoir_ptr;    
+    *res_ptr = sample_offset_reservoir_ptr;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sample_reservoir_offsets_with_replacement_with_fixed_k()\n");
+#endif
 }
 
 void shuffle_reservoir_offsets_via_fisher_yates(offset_reservoir **res_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: shuffle_reservoir_offsets_via_fisher_yates()\n");
+    fprintf(stderr, "Debug: Entering --> shuffle_reservoir_offsets_via_fisher_yates()\n");
 #endif
 
     long ln_idx = (*res_ptr)->num_offsets;
@@ -455,31 +511,45 @@ void shuffle_reservoir_offsets_via_fisher_yates(offset_reservoir **res_ptr)
         (*res_ptr)->offsets[shuf_idx] = (*res_ptr)->offsets[rand_idx];
         (*res_ptr)->offsets[rand_idx] = temp_offset;
     }
-    
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> shuffle_reservoir_offsets_via_fisher_yates()\n");
+#endif    
 }
 
 void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr) 
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: sort_offset_reservoir_ptr_offsets()\n");
+    fprintf(stderr, "Debug: Entering --> sort_offset_reservoir_ptr_offsets()\n");
 #endif
+
     qsort( (*res_ptr)->offsets, (*res_ptr)->num_offsets, sizeof(off_t), offset_compare );
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> sort_offset_reservoir_ptr_offsets()\n");
+#endif
 }
 
 int offset_compare(const void *off1, const void *off2)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: offset_compare()\n");
+    fprintf(stderr, "Debug: Entering --> offset_compare()\n");
     fprintf(stderr, "Debug: Comparing: %012lld and %012lld\n", (long long int) *(off_t *)off1, (long long int) *(off_t *)off2);
 #endif
+
     int off_diff = (*(off_t *)off1) - (*(off_t *)off2);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> offset_compare()\n");
+#endif
+
     return (off_diff > 0) ? 1 : -1;
 } 
 
 void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_reservoir *res_ptr, const int lines_per_offset)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: print_offset_reservoir_sample_via_mmap()\n");
+    fprintf(stderr, "Debug: Entering --> print_offset_reservoir_sample_via_mmap()\n");
 #endif
 
     int res_idx;
@@ -495,12 +565,16 @@ void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_res
                 break;
         }
     }
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> print_offset_reservoir_sample_via_mmap()\n");
+#endif
 }
 
 void print_sorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset_reservoir *res_ptr, const int lines_per_offset)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: print_sorted_offset_reservoir_sample_via_cstdio()\n");
+    fprintf(stderr, "Debug: Entering --> print_sorted_offset_reservoir_sample_via_cstdio()\n");
 #endif
 
     int idx;
@@ -535,12 +609,16 @@ void print_sorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset_r
         previous_offset = res_ptr->offsets[idx];
         temp_length = 0;
     }
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> print_sorted_offset_reservoir_sample_via_cstdio()\n");
+#endif
 }
 
 void print_unsorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset_reservoir *res_ptr, const int lines_per_offset)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: print_unsorted_offset_reservoir_sample_via_cstdio()\n");
+    fprintf(stderr, "Debug: Entering --> print_unsorted_offset_reservoir_sample_via_cstdio()\n");
 #endif
 
     int idx;
@@ -569,12 +647,16 @@ void print_unsorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset
         fprintf(stdout, "%s", in_line);
         temp_length = 0;
     }
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> print_unsorted_offset_reservoir_sample_via_cstdio()\n");
+#endif
 }
 
 FILE * new_file_ptr(const char *in_fn)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: new_file_ptr()\n");
+    fprintf(stderr, "Debug: Entering --> new_file_ptr()\n");
 #endif
 
     FILE *file_ptr = NULL;
@@ -586,6 +668,10 @@ FILE * new_file_ptr(const char *in_fn)
         fprintf(stderr, "Error: Stdin not yet supported with this application\n");
         exit(EXIT_FAILURE);
     }
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> new_file_ptr()\n");
+#endif
     
     return file_ptr;
 }
@@ -593,17 +679,21 @@ FILE * new_file_ptr(const char *in_fn)
 void delete_file_ptr(FILE **file_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: delete_file_ptr()\n");
+    fprintf(stderr, "Debug: Entering --> delete_file_ptr()\n");
 #endif
 
     fclose(*file_ptr);
     *file_ptr = NULL;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> delete_file_ptr()\n");
+#endif
 }
 
 file_mmap * new_file_mmap(const char *in_fn)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: new_file_mmap()\n");
+    fprintf(stderr, "Debug: Entering --> new_file_mmap()\n");
 #endif
     
     file_mmap *mmap_ptr = NULL;
@@ -643,13 +733,17 @@ file_mmap * new_file_mmap(const char *in_fn)
         exit(EXIT_FAILURE);
     }
 
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> new_file_mmap()\n");
+#endif
+
     return mmap_ptr;
 }
 
 void delete_file_mmap(file_mmap **mmap_ptr)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: delete_file_mmap()\n");
+    fprintf(stderr, "Debug: Entering --> delete_file_mmap()\n");
 #endif
 
     close((*mmap_ptr)->fd);
@@ -658,10 +752,18 @@ void delete_file_mmap(file_mmap **mmap_ptr)
     (*mmap_ptr)->fn = NULL;
     free(*mmap_ptr);
     *mmap_ptr = NULL;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> delete_file_mmap()\n");
+#endif
 }
 
 void initialize_globals()
 {
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Entering --> initialize_globals()\n");
+#endif
+
     sample_global_args.sample_size_specified = kFalse;
     sample_global_args.sample_without_replacement = kTrue;
     sample_global_args.sample_with_replacement = kFalse;
@@ -675,12 +777,16 @@ void initialize_globals()
     sample_global_args.rng_seed_specified = kFalse;
     sample_global_args.filenames = NULL;
     sample_global_args.num_filenames = 0;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> initialize_globals()\n");
+#endif
 }
 
 void parse_command_line_options(int argc, char **argv)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: parse_command_line_options()\n");
+    fprintf(stderr, "Debug: Entering --> parse_command_line_options()\n");
 #endif
 
     int client_long_index;
@@ -781,12 +887,16 @@ void parse_command_line_options(int argc, char **argv)
             print_usage(stderr);
             exit(EXIT_FAILURE);
         }
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> parse_command_line_options()\n");
+#endif
 }
 
 void print_usage(FILE *stream)
 {
 #ifdef DEBUG
-    fprintf(stderr, "Debug: print_usage()\n");
+    fprintf(stderr, "Debug: Entering --> print_usage()\n");
 #endif
 
     fprintf(stream, 
@@ -798,4 +908,8 @@ void print_usage(FILE *stream)
             version,
             authors,
             usage);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> print_usage()\n");
+#endif
 }
