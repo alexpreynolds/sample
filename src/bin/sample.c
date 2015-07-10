@@ -809,12 +809,26 @@ void parse_command_line_options(int argc, char **argv)
             switch (client_opt) 
                 {
                 case 'k':
-                    sample_global_args.k = atoi(optarg);
-                    sample_size_flag = kTrue;
-                    break;
+		    if (optarg) {
+			sample_global_args.k = atoi(optarg);
+			sample_size_flag = kTrue;
+			break;
+		    }
+		    else {
+			fprintf(stderr, "Error: Sample size option is specified, but its value is unspecified\n");
+			print_usage(stderr);
+			exit(EXIT_FAILURE);
+		    }
                 case 'l':
-                    sample_global_args.lines_per_offset = atoi(optarg);
-                    break;
+		    if (optarg) {
+			sample_global_args.lines_per_offset = atoi(optarg);
+			break;
+		    }
+		    else {
+			fprintf(stderr, "Error: Lines-per-offset option is specified, but its value is unspecified\n");
+			print_usage(stderr);
+			exit(EXIT_FAILURE);
+		    }
                 case 'o':
                     sample_global_args.sample_without_replacement = kTrue;
                     sample_type_flags++;
@@ -847,9 +861,16 @@ void parse_command_line_options(int argc, char **argv)
                     io_type_flags++;
                     break;
                 case 'd':
-                    sample_global_args.rng_seed_value = atoi(optarg);
-                    sample_global_args.rng_seed_specified = kTrue;
-                    break;
+		    if (optarg) {
+			sample_global_args.rng_seed_value = atoi(optarg);
+			sample_global_args.rng_seed_specified = kTrue;
+			break;
+		    }
+		    else {
+			fprintf(stderr, "Error: RNG seed initializer option is specified, but its value is unspecified\n");
+			print_usage(stderr);
+			exit(EXIT_FAILURE);
+		    }
                 case 'h':
                     print_usage(stdout);
                     exit(EXIT_SUCCESS);
