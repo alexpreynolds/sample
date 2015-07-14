@@ -537,7 +537,7 @@ int offset_compare(const void *off1, const void *off2)
     fprintf(stderr, "Debug: Comparing: %012lld and %012lld\n", (long long int) *(off_t *)off1, (long long int) *(off_t *)off2);
 #endif
 
-    int off_diff = (*(off_t *)off1) - (*(off_t *)off2);
+    long long int off_diff = (long long int)((*(off_t *)off1) - (*(off_t *)off2));
 
 #ifdef DEBUG
     fprintf(stderr, "Debug: Leaving  --> offset_compare()\n");
