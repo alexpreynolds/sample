@@ -4,6 +4,7 @@ CDFLAGS                   = -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64 -D_L
 INCLUDES                 := -iquote${PWD}/include
 OBJDIR                    = objects
 SAMPLELIB                := $(PWD)/sample-library.a
+TEST                     := $(PWD)/test
 PROG                      = sample
 SOURCE                    = src/bin/sample.c
 
@@ -22,6 +23,12 @@ build: sample-library
 debug: sample-library
 	$(CC) $(BLDFLAGS) $(CDFLAGS) -c $(SOURCE) -o $(OBJDIR)/$(PROG).o $(INCLUDES)
 	$(CC) $(BLDFLAGS) $(CDFLAGS) $(OBJDIR)/$(PROG).o -o $(PROG) $(SAMPLELIB)
+
+check: build
+	$(PWD)/$(PROG) README.md -d 123 | diff - $(TEST)/README.md.seed123.txt > /dev/null || (echo "check: sample test failed on seed 123" && exit 1)
+	$(PWD)/$(PROG) README.md -d 234 | diff - $(TEST)/README.md.seed234.txt > /dev/null || (echo "check: sample test failed on seed 234" && exit 1)
+	$(PWD)/$(PROG) README.md -d 9876 | diff - $(TEST)/README.md.seed987.txt > /dev/null || (echo "check: sample test failed on seed 987" && exit 1)
+	@echo "sample tests passed"
 
 clean:
 	rm -f $(PROG)
