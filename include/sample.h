@@ -66,6 +66,7 @@ static const char *usage = "\n" \
     "  --cstdio                      | -c      Use C I/O routines for handling input file (optional)\n" \
     "  --hybrid                      | -y      Use hybrid of C I/O routines and memory mapping for handling input file (optional)\n" \
     "  --rng-seed=n                  | -d n    Initialize the Twister RNG with a specific seed value (n = positive integer; optional)\n" \
+    "  --version                     | -v      Show binary version\n" \
     "  --help                        | -h      Show this usage message\n";
 
 static struct sample_global_args_t {
@@ -95,41 +96,43 @@ static struct option sample_client_long_options[] = {
     { "mmap",	        		no_argument,		NULL,	'm' },
     { "cstdio",	        		no_argument,		NULL,	'c' },
     { "rng-seed",			required_argument,	NULL,	'd' },
+    { "version",			no_argument,		NULL,	'v' },
     { "help",				no_argument,		NULL,	'h' },
     { NULL,				no_argument,		NULL,	 0  }
 }; 
 
-static const char *sample_client_opt_string = "k:l:orspymcd:h?";
+static const char *sample_client_opt_string = "k:l:orspymcd:vh?";
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-offset_reservoir * new_offset_reservoir_ptr(const long len);
-void delete_offset_reservoir_ptr(offset_reservoir **res_ptr);
-void print_offset_reservoir_ptr(const offset_reservoir *res_ptr);
-void sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(FILE *in_file_ptr, offset_reservoir **res_ptr, const int lines_per_offset);
-void sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k(offset_reservoir **res_ptr, const int sample_size);
-void sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k(offset_reservoir **res_ptr);
-void sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k(FILE *in_file_ptr, offset_reservoir **res_ptr, const int lines_per_offset);
-void sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k(file_mmap *in_mmap, offset_reservoir **res_ptr, const int lines_per_offset);
-void sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k(offset_reservoir **res_ptr, const int sample_size);
-void sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k(offset_reservoir **res_ptr);
-void sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr, const int lines_per_offset);
-void sample_reservoir_offsets_with_replacement_with_fixed_k(offset_reservoir **res_ptr, const int sample_size);
-void shuffle_reservoir_offsets_via_fisher_yates(offset_reservoir **res_ptr);
-void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr);
-int offset_compare(const void *off1, const void *off2);
-void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_reservoir *res_ptr, const int lines_per_offset);
-void print_sorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset_reservoir *res_ptr, const int lines_per_offset);
-void print_unsorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset_reservoir *res_ptr, const int lines_per_offset);
-FILE * new_file_ptr(const char *in_fn);
-void delete_file_ptr(FILE **file_ptr);
-file_mmap * new_file_mmap(const char *in_fn);
-void delete_file_mmap(file_mmap **mmap_ptr);
-void initialize_globals();
-void parse_command_line_options(int argc, char **argv);
-void print_usage(FILE *stream);
+    offset_reservoir * new_offset_reservoir_ptr(const long len);
+    void delete_offset_reservoir_ptr(offset_reservoir **res_ptr);
+    void print_offset_reservoir_ptr(const offset_reservoir *res_ptr);
+    void sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(FILE *in_file_ptr, offset_reservoir **res_ptr, const int lines_per_offset);
+    void sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k(offset_reservoir **res_ptr, const int sample_size);
+    void sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k(offset_reservoir **res_ptr);
+    void sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k(FILE *in_file_ptr, offset_reservoir **res_ptr, const int lines_per_offset);
+    void sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k(file_mmap *in_mmap, offset_reservoir **res_ptr, const int lines_per_offset);
+    void sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k(offset_reservoir **res_ptr, const int sample_size);
+    void sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k(offset_reservoir **res_ptr);
+    void sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k(file_mmap *in_mmap, offset_reservoir **res_ptr, const int lines_per_offset);
+    void sample_reservoir_offsets_with_replacement_with_fixed_k(offset_reservoir **res_ptr, const int sample_size);
+    void shuffle_reservoir_offsets_via_fisher_yates(offset_reservoir **res_ptr);
+    void sort_offset_reservoir_ptr_offsets(offset_reservoir **res_ptr);
+    int offset_compare(const void *off1, const void *off2);
+    void print_offset_reservoir_sample_via_mmap(const file_mmap *in_mmap, offset_reservoir *res_ptr, const int lines_per_offset);
+    void print_sorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset_reservoir *res_ptr, const int lines_per_offset);
+    void print_unsorted_offset_reservoir_sample_via_cstdio(FILE *in_file_ptr, offset_reservoir *res_ptr, const int lines_per_offset);
+    FILE * new_file_ptr(const char *in_fn);
+    void delete_file_ptr(FILE **file_ptr);
+    file_mmap * new_file_mmap(const char *in_fn);
+    void delete_file_mmap(file_mmap **mmap_ptr);
+    void initialize_globals();
+    void parse_command_line_options(int argc, char **argv);
+    void print_usage(FILE *stream);
+    void print_version(FILE *stream);
 
 #ifdef __cplusplus
 }

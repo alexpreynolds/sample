@@ -871,6 +871,9 @@ void parse_command_line_options(int argc, char **argv)
 			print_usage(stderr);
 			exit(EXIT_FAILURE);
 		    }
+                case 'v':
+                    print_version(stdout);
+                    exit(EXIT_SUCCESS);
                 case 'h':
                     print_usage(stdout);
                     exit(EXIT_SUCCESS);
@@ -932,5 +935,24 @@ void print_usage(FILE *stream)
 
 #ifdef DEBUG
     fprintf(stderr, "Debug: Leaving  --> print_usage()\n");
+#endif
+}
+
+void print_version(FILE *stream)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Entering --> print_version()\n");
+#endif
+
+    fprintf(stream, 
+            "%s\n" \
+            "  version: %s\n" \
+            "  author:  %s\n",
+            name, 
+            version,
+            authors);
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> print_version()\n");
 #endif
 }
