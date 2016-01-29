@@ -2,7 +2,7 @@ BLDFLAGS                  = -Wall -Wextra -pedantic -std=c99
 CFLAGS                    = -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -O3
 CDFLAGS                   = -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -DDEBUG=1 -g -O0 -fno-inline
 #INCLUDES                 := -iquote${PWD}/include
-INCLUDES                 := -iquoteinclude
+INCLUDES                 := -iquote./include
 OBJDIR                    = objects
 SAMPLELIB                := $(PWD)/sample-library.a
 TEST                     := $(PWD)/test
