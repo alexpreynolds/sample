@@ -13,7 +13,7 @@
 #include <sys/mman.h>
 #include <getopt.h>
 
-#define RS_VERSION "1.0"
+#define RS_VERSION "1.0.2"
 #define DEFAULT_OFFSET_VALUE -1
 #define DEFAULT_SAMPLE_SIZE_INCREMENT 10000
 #define LINE_LENGTH_VALUE 65536
