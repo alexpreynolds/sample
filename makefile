@@ -3,8 +3,8 @@ CFLAGS                    = -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64 -D_L
 CDFLAGS                   = -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -DDEBUG=1 -g -O0 -fno-inline
 INCLUDES                 := -iquote./include
 OBJDIR                    = objects
-SAMPLELIB                := $(PWD)/sample-library.a
-TEST                     := $(PWD)/test
+SAMPLELIB                := $(CURDIR)/sample-library.a
+TEST                     := $(CURDIR)/test
 PROG                      = sample
 SOURCE                    = src/bin/sample.c
 
@@ -25,9 +25,9 @@ debug: sample-library
 	$(CC) $(BLDFLAGS) $(CDFLAGS) $(OBJDIR)/$(PROG).o -o $(PROG) $(SAMPLELIB)
 
 check: build
-	$(PWD)/$(PROG) README.md -d 123 | diff - $(TEST)/README.md.seed123.txt > /dev/null || (echo "check: sample test failed on seed 123" && exit 1)
-	$(PWD)/$(PROG) README.md -d 234 | diff - $(TEST)/README.md.seed234.txt > /dev/null || (echo "check: sample test failed on seed 234" && exit 1)
-	$(PWD)/$(PROG) README.md -d 9876 | diff - $(TEST)/README.md.seed987.txt > /dev/null || (echo "check: sample test failed on seed 987" && exit 1)
+	$(CURDIR)/$(PROG) README.md -d 123 | diff - $(TEST)/README.md.seed123.txt > /dev/null || (echo "check: sample test failed on seed 123" && exit 1)
+	$(CURDIR)/$(PROG) README.md -d 234 | diff - $(TEST)/README.md.seed234.txt > /dev/null || (echo "check: sample test failed on seed 234" && exit 1)
+	$(CURDIR)/$(PROG) README.md -d 987 | diff - $(TEST)/README.md.seed987.txt > /dev/null || (echo "check: sample test failed on seed 987" && exit 1)
 	@echo "sample tests passed"
 
 clean:
