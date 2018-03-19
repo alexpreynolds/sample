@@ -12,8 +12,9 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <getopt.h>
+#include <math.h>
 
-#define RS_VERSION "1.0.2"
+#define RS_VERSION "1.1"
 #define DEFAULT_OFFSET_VALUE -1
 #define DEFAULT_SAMPLE_SIZE_INCREMENT 10000
 #define LINE_LENGTH_VALUE 65536
@@ -26,11 +27,18 @@ const boolean kTrue = 1;
 const boolean kFalse = 0;
 
 typedef struct offset_reservoir offset_reservoir;
+typedef struct offset_reservoir_bitarray offset_reservoir_bitarray;
 typedef struct file_mmap file_mmap;
 
 struct offset_reservoir {
     long num_offsets;
     off_t *offsets;
+};
+
+struct offset_reservoir_bitarray {
+    long num_offsets;
+    unsigned char *offsets;
+    long num_true_lines;
 };
 
 struct file_mmap {
@@ -46,7 +54,7 @@ static const char *name = "sample";
 static const char *version = RS_VERSION;
 static const char *authors = "Alex Reynolds";
 static const char *usage = "\n" \
-    "Usage: sample [--sample-size=n] [--lines-per-offset=n] [--sample-without-replacement | --sample-with-replacement] [--shuffle | --preserve-order] [--hybrid | --mmap | --cstdio] [--rng-seed=n] <newline-delimited-file>\n" \
+    "Usage: sample [--all=n] [--sample-size=n] [--lines-per-offset=n] [--sample-without-replacement | --sample-with-replacement] [--shuffle | --preserve-order] [--hybrid | --mmap | --cstdio] [--rng-seed=n] <newline-delimited-file>\n" \
     "\n" \
     "  Performs reservoir sampling (http://dx.doi.org/10.1145/3147.3165) on very large input\n" \
     "  files that are delimited by newline characters. The approach used in this application\n" \
@@ -54,8 +62,11 @@ static const char *usage = "\n" \
     "  of the line elements themselves.\n\n" \
     "  If the sample size (--sample-size) parameter is omitted, then the sample binary will shuffle\n" \
     "  the entire file.\n\n" \
-    "  For text files delimited by multiples of lines, specify a --lines-per-offset value.\n\n" \
+    "  For text files delimited by multiples of lines, specify a --lines-per-offset value. For\n" \
+    "  example, a single-line FASTA file would use a lines-per-offset value of 2. A typical\n" \
+    "  uncompressed FASTQ file would use a lines-per-offset value of 4.\n\n" \
     "  Process Flags:\n\n" \
+    "  --shuffle-all=n               | -a n    Shuffle entire file efficienty with file line count (n = positive integer; required)\n" \
     "  --sample-size=n               | -k n    Number of samples to retrieve (n = positive integer; optional)\n" \
     "  --lines-per-offset=n          | -l n    Number of lines per offset (n = positive integer; optional, default=1)\n" \
     "  --sample-without-replacement  | -o      Sample without replacement (default)\n" \
@@ -70,6 +81,7 @@ static const char *usage = "\n" \
     "  --help                        | -h      Show this usage message\n";
 
 static struct sample_global_args_t {
+    boolean shuffle_all;
     boolean preserve_order;
     boolean hybrid;
     boolean mmap;
@@ -83,9 +95,12 @@ static struct sample_global_args_t {
     int num_filenames;
     int rng_seed_value;
     boolean rng_seed_specified;
+    int lines_in_file;
+    boolean lines_in_file_specified;
 } sample_global_args;
 
 static struct option sample_client_long_options[] = {
+    { "shuffle-all",                    required_argument,      NULL,   'a' },
     { "sample-size",			optional_argument,	NULL,	'k' },
     { "lines-per-offset",		optional_argument,	NULL,	'l' },
     { "sample-without-replacement",	no_argument,		NULL,	'o' },
@@ -101,12 +116,14 @@ static struct option sample_client_long_options[] = {
     { NULL,				no_argument,		NULL,	 0  }
 }; 
 
-static const char *sample_client_opt_string = "k:l:orspymcd:vh?";
+static const char *sample_client_opt_string = "a:k:l:orspymcd:vh?";
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+    offset_reservoir_bitarray * new_offset_reservoir_bitarray_ptr(const long lines, const int lines_per_offset);
+    void delete_offset_reservoir_bitarray_ptr(offset_reservoir_bitarray **res_ptr);
     offset_reservoir * new_offset_reservoir_ptr(const long len);
     void delete_offset_reservoir_ptr(offset_reservoir **res_ptr);
     void print_offset_reservoir_ptr(const offset_reservoir *res_ptr);

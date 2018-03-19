@@ -23,6 +23,10 @@ int main(int argc, char** argv)
     boolean rng_seed_specified;
     int lines_per_offset;
 
+    offset_reservoir_bitarray *offset_reservoir_bitarray_ptr = NULL;
+    boolean shuffle_all;
+    int lines_in_file;
+
     parse_command_line_options(argc, argv);
     k = sample_global_args.k;
     in_filename = sample_global_args.filenames[0];
@@ -36,6 +40,8 @@ int main(int argc, char** argv)
     lines_per_offset = sample_global_args.lines_per_offset;
     rng_seed_value = sample_global_args.rng_seed_value;
     rng_seed_specified = sample_global_args.rng_seed_specified;
+    shuffle_all = sample_global_args.shuffle_all;
+    lines_in_file = sample_global_args.lines_in_file;
 
     /* seed the Twister random number generator */
     if (rng_seed_specified)
@@ -43,90 +49,177 @@ int main(int argc, char** argv)
     else
         mt19937_seed_rng(time(NULL));
 
-    /* set up a blank reservoir pool */
-    offset_reservoir_ptr = new_offset_reservoir_ptr(k);
-
-    /* sample and shuffle offsets */
-    if (sample_without_replacement) 
+    if (shuffle_all) 
         {
-            if ((hybrid_in_file) || (cstdio_in_file)) {
-                in_file_ptr = new_file_ptr(in_filename);
-                if (sample_size_specified)
-                    sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(in_file_ptr, &offset_reservoir_ptr, lines_per_offset);
-                else {
-                    sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k(in_file_ptr, &offset_reservoir_ptr, lines_per_offset);
-                    shuffle_reservoir_offsets_via_fisher_yates(&offset_reservoir_ptr);
+            /* set up a blank reservoir pool as bitarray */
+            offset_reservoir_bitarray_ptr = new_offset_reservoir_bitarray_ptr(lines_in_file, lines_per_offset);
+
+            /* sample and shuffle offsets within bitarray */
+            if (sample_without_replacement)
+                {
                 }
-            }
-            else if (mmap_in_file) {
-                in_file_mmap_ptr = new_file_mmap(in_filename);
-                if (sample_size_specified)
-                    sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k(in_file_mmap_ptr, &offset_reservoir_ptr, lines_per_offset);
-                else {
-                    sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k(in_file_mmap_ptr, &offset_reservoir_ptr, lines_per_offset);
-                    shuffle_reservoir_offsets_via_fisher_yates(&offset_reservoir_ptr);
+            else if (sample_with_replacement)
+                {
                 }
+
+            /* clean up */
+            if (offset_reservoir_bitarray_ptr) {
+                delete_offset_reservoir_bitarray_ptr(&offset_reservoir_bitarray_ptr);
             }
         }
-    else if (sample_with_replacement) 
+    /* end of shuffle-all */
+    else 
         {
-            if ((hybrid_in_file) || (cstdio_in_file)) {
-                in_file_ptr = new_file_ptr(in_filename);
-                sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(in_file_ptr, &offset_reservoir_ptr, lines_per_offset);
-                if (sample_size_specified)
-                    sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k(&offset_reservoir_ptr, k);
-                else
-                    sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k(&offset_reservoir_ptr);
+            /* set up a blank reservoir pool */
+            offset_reservoir_ptr = new_offset_reservoir_ptr(k);
+            
+            /* sample and shuffle offsets */
+            if (sample_without_replacement) 
+                {
+                    if ((hybrid_in_file) || (cstdio_in_file)) {
+                        in_file_ptr = new_file_ptr(in_filename);
+                        if (sample_size_specified)
+                            sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(in_file_ptr, &offset_reservoir_ptr, lines_per_offset);
+                        else {
+                            sample_reservoir_offsets_without_replacement_via_cstdio_with_unspecified_k(in_file_ptr, &offset_reservoir_ptr, lines_per_offset);
+                            shuffle_reservoir_offsets_via_fisher_yates(&offset_reservoir_ptr);
+                        }
+                    }
+                    else if (mmap_in_file) {
+                        in_file_mmap_ptr = new_file_mmap(in_filename);
+                        if (sample_size_specified)
+                            sample_reservoir_offsets_without_replacement_via_mmap_with_fixed_k(in_file_mmap_ptr, &offset_reservoir_ptr, lines_per_offset);
+                        else {
+                            sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k(in_file_mmap_ptr, &offset_reservoir_ptr, lines_per_offset);
+                            shuffle_reservoir_offsets_via_fisher_yates(&offset_reservoir_ptr);
+                        }
+                    }
+                }
+            else if (sample_with_replacement) 
+                {
+                    if ((hybrid_in_file) || (cstdio_in_file)) {
+                        in_file_ptr = new_file_ptr(in_filename);
+                        sample_reservoir_offsets_without_replacement_via_cstdio_with_fixed_k(in_file_ptr, &offset_reservoir_ptr, lines_per_offset);
+                        if (sample_size_specified)
+                            sample_reservoir_offsets_with_replacement_via_cstdio_with_fixed_k(&offset_reservoir_ptr, k);
+                        else
+                            sample_reservoir_offsets_with_replacement_via_cstdio_with_unspecified_k(&offset_reservoir_ptr);
+                    }
+                    else if (mmap_in_file) {
+                        in_file_mmap_ptr = new_file_mmap(in_filename);
+                        sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k(in_file_mmap_ptr, &offset_reservoir_ptr, lines_per_offset);
+                        if (sample_size_specified)
+                            sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k(&offset_reservoir_ptr, k);
+                        else
+                            sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k(&offset_reservoir_ptr);
+                    }
+                }
+            
+#ifdef DEBUG
+            /* print reservoir offsets */
+            print_offset_reservoir_ptr(offset_reservoir_ptr);
+#endif
+            
+            /* sort offsets, if needed */
+            if (preserve_output_order) {
+                sort_offset_reservoir_ptr_offsets(&offset_reservoir_ptr);
+#ifdef DEBUG
+                print_offset_reservoir_ptr(offset_reservoir_ptr);
+#endif
             }
-            else if (mmap_in_file) {
-                in_file_mmap_ptr = new_file_mmap(in_filename);
-                sample_reservoir_offsets_without_replacement_via_mmap_with_unspecified_k(in_file_mmap_ptr, &offset_reservoir_ptr, lines_per_offset);
-                if (sample_size_specified)
-                    sample_reservoir_offsets_with_replacement_via_mmap_with_fixed_k(&offset_reservoir_ptr, k);
+            
+            /* print reservoir offset line references */
+            if (hybrid_in_file)
+                print_offset_reservoir_sample_via_mmap(in_file_mmap_ptr, offset_reservoir_ptr, lines_per_offset);    
+            else if (cstdio_in_file) {
+                if (preserve_output_order)
+                    print_sorted_offset_reservoir_sample_via_cstdio(in_file_ptr, offset_reservoir_ptr, lines_per_offset);
                 else
-                    sample_reservoir_offsets_with_replacement_via_mmap_with_unspecified_k(&offset_reservoir_ptr);
+                    print_unsorted_offset_reservoir_sample_via_cstdio(in_file_ptr, offset_reservoir_ptr, lines_per_offset);
             }
+            else if (mmap_in_file)
+                print_offset_reservoir_sample_via_mmap(in_file_mmap_ptr, offset_reservoir_ptr, lines_per_offset);
+            
+            
+            /* clean up */
+            if (offset_reservoir_ptr)
+                delete_offset_reservoir_ptr(&offset_reservoir_ptr);
+            if (in_file_mmap_ptr)
+                delete_file_mmap(&in_file_mmap_ptr);
+            if (in_file_ptr)
+                delete_file_ptr(&in_file_ptr);
         }
-
-#ifdef DEBUG
-    /* print reservoir offsets */
-    print_offset_reservoir_ptr(offset_reservoir_ptr);
-#endif
-
-    /* sort offsets, if needed */
-    if (preserve_output_order) {
-        sort_offset_reservoir_ptr_offsets(&offset_reservoir_ptr);
-#ifdef DEBUG
-        print_offset_reservoir_ptr(offset_reservoir_ptr);
-#endif
-    }
-
-    /* print reservoir offset line references */
-    if (hybrid_in_file)
-        print_offset_reservoir_sample_via_mmap(in_file_mmap_ptr, offset_reservoir_ptr, lines_per_offset);    
-    else if (cstdio_in_file) {
-        if (preserve_output_order)
-            print_sorted_offset_reservoir_sample_via_cstdio(in_file_ptr, offset_reservoir_ptr, lines_per_offset);
-        else
-            print_unsorted_offset_reservoir_sample_via_cstdio(in_file_ptr, offset_reservoir_ptr, lines_per_offset);
-    }
-    else if (mmap_in_file)
-        print_offset_reservoir_sample_via_mmap(in_file_mmap_ptr, offset_reservoir_ptr, lines_per_offset);
-
-
-    /* clean up */
-    if (offset_reservoir_ptr)
-        delete_offset_reservoir_ptr(&offset_reservoir_ptr);
-    if (in_file_mmap_ptr)
-        delete_file_mmap(&in_file_mmap_ptr);
-    if (in_file_ptr)
-        delete_file_ptr(&in_file_ptr);
+    /* end of not-shuffle-all */
 
 #ifdef DEBUG
     fprintf(stderr, "Debug: Leaving  --> main()\n");
 #endif
 
     return EXIT_SUCCESS;
+}
+
+offset_reservoir_bitarray * new_offset_reservoir_bitarray_ptr(const long lines, const int lines_per_offset)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Entering --> new_offset_reservoir_bitarray_ptr()\n");
+#endif
+    
+    offset_reservoir_bitarray *res = NULL;
+    unsigned char *offsets = NULL;
+    long offset_idx = 0;
+    long num_offsets = (long)ceil((lines / 8) / lines_per_offset); /* will be > 0 */
+    
+    offsets = malloc(sizeof(*offsets) * num_offsets);
+    if (!offsets) {
+        fprintf(stderr, "Debug: offsets instance is NULL\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (offset_idx = 0; offset_idx < num_offsets; ++offset_idx) {
+        offsets[offset_idx] = 0x00;
+    }
+
+    res = malloc(sizeof(offset_reservoir_bitarray));
+    if (!res) {
+        fprintf(stderr, "Debug: offset_reservoir_bitarray instance res is NULL\n");
+        exit(EXIT_FAILURE);
+    }
+
+    res->num_offsets = num_offsets;
+    res->offsets = offsets;
+    res->num_true_lines = lines;
+    
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> new_offset_reservoir_bitarray_ptr()\n");
+#endif
+
+    return res;
+}
+
+void delete_offset_reservoir_bitarray_ptr(offset_reservoir_bitarray **res_ptr)
+{
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Entering --> delete_offset_reservoir_bitarray_ptr()\n");
+#endif
+
+    if (!*res_ptr) {
+        fprintf(stderr, "Error: Offset reservoir bitarray pointer instance is NULL\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((*res_ptr)->offsets) {
+        free((*res_ptr)->offsets);
+        (*res_ptr)->offsets = NULL;
+        (*res_ptr)->num_offsets = 0;
+        (*res_ptr)->num_true_lines = 0;
+    }
+
+    free(*res_ptr);
+    *res_ptr = NULL;
+
+#ifdef DEBUG
+    fprintf(stderr, "Debug: Leaving  --> delete_offset_reservoir_bitarray_ptr()\n");
+#endif
 }
 
 offset_reservoir * new_offset_reservoir_ptr(const long len)
@@ -764,6 +857,7 @@ void initialize_globals()
     fprintf(stderr, "Debug: Entering --> initialize_globals()\n");
 #endif
 
+    sample_global_args.shuffle_all = kFalse;
     sample_global_args.sample_size_specified = kFalse;
     sample_global_args.sample_without_replacement = kTrue;
     sample_global_args.sample_with_replacement = kFalse;
@@ -777,6 +871,8 @@ void initialize_globals()
     sample_global_args.rng_seed_specified = kFalse;
     sample_global_args.filenames = NULL;
     sample_global_args.num_filenames = 0;
+    sample_global_args.lines_in_file = 0;
+    sample_global_args.lines_in_file_specified = kFalse;
 
 #ifdef DEBUG
     fprintf(stderr, "Debug: Leaving  --> initialize_globals()\n");
@@ -808,6 +904,18 @@ void parse_command_line_options(int argc, char **argv)
         {
             switch (client_opt) 
                 {
+                case 'a':
+                    if (optarg) {
+                        sample_global_args.shuffle_all = kTrue;
+                        sample_global_args.lines_in_file = atoi(optarg);
+                        sample_global_args.lines_in_file_specified = kTrue;
+                        break;
+                    }
+                    else {
+                        fprintf(stderr, "Error: Shuffling entire file with '--shuffle-all' or '-a' required line count to be specified\n");
+                        print_usage(stderr);
+                        exit(EXIT_FAILURE);
+                    }
                 case 'k':
 		    if (optarg) {
 			sample_global_args.k = atoi(optarg);
