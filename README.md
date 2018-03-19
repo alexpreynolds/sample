@@ -3,13 +3,19 @@ sample
 
 [![Build Status](https://travis-ci.org/alexpreynolds/sample.svg?branch=master)](https://travis-ci.org/alexpreynolds/sample)
 
+## About
+
 This tool performs reservoir sampling (Vitter, "Random sampling with a reservoir"; cf. http://dx.doi.org/10.1145/3147.3165 and also: http://en.wikipedia.org/wiki/Reservoir_sampling) on very large text files that are delimited by newline characters. Sampling can be done with or without replacement. The approach used in this application reduces the typical memory usage issue with reservoir sampling by storing a pool of byte offsets to the start of each line, instead of the line elements themselves, thus allowing much larger sample sizes. 
 
-<div class="alert tip">
+------
 
-<p><strong>Tip:</strong> If the line count of the file is known ahead of time (e.g., via `wc -l`) and if we want to shuffle the entire file, we can do so efficiently by storing a pool of bits, one bit for each line offset. This reduces the memory overhead by a factor of 64! Reduced memory usage means we can shuffle even larger files and do so faster through fast bitwise operations.</p>
+## Tip for shuffling entire files
 
-</div>
+**Tip:** If the line count of the file is known ahead of time (e.g., via `wc -l`) and if we want to shuffle the entire file, we can do so efficiently by storing a pool of bits, one bit for each line offset. This reduces the memory overhead by a factor of 64! Reduced memory usage means we can shuffle even larger files and do so faster through fast bitwise operations.
+
+------
+
+## Advantages over GNU `shuf`
 
 In its current form, this application offers a few advantages over common `shuf`-based approaches:
 
