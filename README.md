@@ -8,17 +8,23 @@ This tool performs reservoir sampling (Vitter, "Random sampling with a reservoir
 In its current form, this application offers a few advantages over common `shuf`-based approaches:
 
 * On small *k*, it performs roughly 2.25-2.75x faster than `shuf` in informal tests on OS X and Linux hosts.
-* It uses much less memory than the usual reservoir sampling approach that stores a pool of sampled elements; instead, `sample` stores the start positions of sampled lines (8 bytes per line).
+* It uses much less memory than the usual reservoir sampling approach that stores a pool of sampled elements; instead, `sample` stores the start positions of sampled lines (8 bytes per element).
 * Using less memory gives `sample` an advantage over `shuf` for whole-genome scale files, helping avoid `shuf: memory exhausted` errors. For instance, a 2 GB allocation would allow a sample size up to ~268M random elements (sampling without replacement).
 
-The `sample` tool stores a pool of line positions and makes two passes through the input file. One pass generates the sample of random positions, using a Mersenne Twister to generate uniformly random values, while the second pass uses those positions to print the sample to standard output. To minimize the expense of this second pass, we use `mmap` routines to gain random access to data in the (regular) input file on both passes.
+The `sample` tool stores a pool of line positions and makes two passes through the input file. One pass generates the sample of random positions, using a Mersenne Twister to generate uniformly random values, while the second pass uses those positions to print the sample to standard output. To minimize the expense of this second pass, we use `mmap` routines to gain random access to data in the regular input file on both passes.
 
 The benefit that `mmap` provided was significant. For comparison purposes, we also add a `--cstdio` option to test the performance of the use of standard C I/O routines (`fseek()`, etc.); predictably, this performed worse than the `mmap`-based approach in all tests, but timing results were about identical with `gshuf` on OS X and still an average 1.5x improvement over `shuf` under Linux.
 
 The `sample` tool can be used to sample from any text file delimited by newline characters (BED, SAM, VCF, etc.).
 
+Additionally, the `sample` tool can be used with the `--lines-per-offset` option to sample multiples of lines from a text file. This can be useful for sampling from FASTA or FASTQ files, each with records that are formatted in two- or four-line groupings.
+
+One can use the `--rng-seed` option to sample the same lines from a particular file. This can be useful for testing sample distributions, or for sampling paired-end reads in conjunction with `--lines-per-offset`.
+
 By adding the `--preserve-order` option, the output sample preserves the input order. For example, when sampling from an input BED file that has been sorted by BEDOPS `sort-bed` — which applies a lexicographical sort on chromosome names and a numerical sort on start and stop coordinates — the sample will also have the same ordering applied, with a relatively small *O(k logk)* penalty for a sample of size *k*.
 
-By omitting the sample size parameter, the `sample` tool can shuffle the entire file. This tool can be used to shuffle files that `shuf` has trouble with; however, it currently operates slower than `shuf`, where `shuf` can be used. We recommend use of `shuf` for shuffling an entire file, or specifying the sample size (up to the line count, if known ahead of time), when possible.
+By default, `sample` performs sampling without replacement — a sampled element will not be resampled. Using `--sample-with-replacement` changes this behavior accordingly.
 
-One downside at this time is that `sample` does not process a standard input stream; the input must be a regular file.
+By omitting the sample size parameter, the `sample` tool can shuffle the entire file. This tool can be used to shuffle files that `shuf` has memory issues with; however, `sample` currently operates slower than `shuf` on shuffling whole files, when `shuf` can be used. We recommend use of `shuf` when shuffling an entire file, where possible, or specifying the `--sample-size` as the line count with `sample`, if known ahead of time (e.g., with `wc -l` or similar).
+
+One downside at this time is that `sample` does not process a standard input stream; the input to `sample` must be a regular file. In contrast, the `shuf` tool can process a standard input stream.
